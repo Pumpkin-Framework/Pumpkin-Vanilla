@@ -1,5 +1,7 @@
 package nl.jk_5.pumpkin.server.util.interfaces;
 
+import com.j256.ormlite.support.ConnectionSource;
+
 import java.sql.SQLException;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.sql.DataSource;
@@ -14,4 +16,6 @@ public interface SqlService {
      * @throws java.sql.SQLException if a connection to the database could not be established
      */
     DataSource getDataSource() throws SQLException;
+
+    ConnectionSource getConnectionSource() throws SQLException;
 }

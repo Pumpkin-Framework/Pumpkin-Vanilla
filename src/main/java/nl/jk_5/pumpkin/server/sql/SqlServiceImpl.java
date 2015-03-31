@@ -2,8 +2,12 @@ package nl.jk_5.pumpkin.server.sql;
 
 import com.google.common.cache.*;
 import com.google.common.collect.ImmutableMap;
+import com.j256.ormlite.db.PostgresDatabaseType;
+import com.j256.ormlite.jdbc.DataSourceConnectionSource;
+import com.j256.ormlite.support.ConnectionSource;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.postgresql.Driver;
 
 import nl.jk_5.pumpkin.server.settings.Settings;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
@@ -79,6 +83,13 @@ public class SqlServiceImpl implements SqlService, Closeable {
     @Override
     public void close() throws IOException {
         this.connectionCache.invalidateAll();
+    }
+
+    @Override
+    public ConnectionSource getConnectionSource() throws SQLException {
+        PostgresDatabaseType type = new PostgresDatabaseType();
+        type.setDriver(new Driver());
+        return new DataSourceConnectionSource(getDataSource(), type);
     }
 
     public static class ConnectionInfo {
