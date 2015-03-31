@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "nl.jk_5.pumpkin.server.mixin",
+  "refmap": "mixins.pumpkin.refmap.json",
+  "server": [
+    "server.MixinMinecraftServer",
+    "server.dedicated.MixinDedicatedServer",
+    "server.dedicated.MixinPropertyManager",
+    "server.dedicated.MixinDedicatedPlayerList"
+  ]
+}
