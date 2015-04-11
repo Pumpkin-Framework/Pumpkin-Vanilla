@@ -4,6 +4,7 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 import nl.jk_5.pumpkin.api.mappack.MappackWorld;
+import nl.jk_5.pumpkin.server.util.Location;
 
 @DatabaseTable(tableName = "mappack_world")
 public class DatabaseMappackWorld implements MappackWorld {
@@ -25,6 +26,21 @@ public class DatabaseMappackWorld implements MappackWorld {
 
     @DatabaseField(columnName = "isdefault")
     private boolean isDefault;
+
+    @DatabaseField(columnName = "spawn_x")
+    private double spawnX;
+
+    @DatabaseField(columnName = "spawn_y")
+    private double spawnY;
+
+    @DatabaseField(columnName = "spawn_z")
+    private double spawnZ;
+
+    @DatabaseField(columnName = "spawn_yaw")
+    private float spawnYaw;
+
+    @DatabaseField(columnName = "spawn_pitch")
+    private float spawnPitch;
 
     public DatabaseMappackWorld() {
     }
@@ -55,5 +71,9 @@ public class DatabaseMappackWorld implements MappackWorld {
     @Override
     public boolean isDefault() {
         return isDefault;
+    }
+
+    public Location getSpawnpoint(){
+        return Location.builder().setX(spawnX).setY(spawnY).setZ(spawnZ).setYaw(spawnYaw).setPitch(spawnPitch).build();
     }
 }

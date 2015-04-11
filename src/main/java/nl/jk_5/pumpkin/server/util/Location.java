@@ -3,7 +3,8 @@ package nl.jk_5.pumpkin.server.util;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.BlockPos;
-import net.minecraft.world.World;
+
+import nl.jk_5.pumpkin.server.mappack.MapWorld;
 
 import javax.annotation.Nonnull;
 
@@ -12,7 +13,7 @@ import javax.annotation.Nonnull;
  */
 public class Location {
 
-    private final World world;
+    private final MapWorld world;
     private final double x;
     private final double y;
     private final double z;
@@ -70,7 +71,7 @@ public class Location {
      * @param y The y-coordinate of this new location
      * @param z The z-coordinate of this new location
      */
-    public Location(World world, final double x, final double y, final double z) {
+    public Location(MapWorld world, final double x, final double y, final double z) {
         this(world, x, y, z, 0, 0);
     }
 
@@ -83,7 +84,7 @@ public class Location {
      * @param yaw   The absolute rotation on the x-plane, in degrees
      * @param pitch The absolute rotation on the y-plane, in degrees
      */
-    public Location(World world, final double x, final double y, final double z, final float yaw, final float pitch) {
+    public Location(MapWorld world, final double x, final double y, final double z, final float yaw, final float pitch) {
         this.world = world;
         this.x = x;
         this.y = y;
@@ -97,7 +98,7 @@ public class Location {
      *
      * @param coords The {@link }} to copy
      */
-    public Location(World world, final BlockPos coords) {
+    public Location(MapWorld world, final BlockPos coords) {
         this(world, coords.getX(), coords.getY(), coords.getZ(), 0, 0);
     }
 
@@ -108,7 +109,7 @@ public class Location {
      * @param yaw    The absolute rotation on the x-plane, in degrees
      * @param pitch  The absolute rotation on the y-plane, in degrees
      */
-    public Location(World world, final BlockPos coords, final float yaw, final float pitch) {
+    public Location(MapWorld world, final BlockPos coords, final float yaw, final float pitch) {
         this(world, coords.getX(), coords.getY(), coords.getZ(), yaw, pitch);
     }
 
@@ -196,11 +197,11 @@ public class Location {
         return MathUtil.floor(z);
     }
 
-    public World getWorld() {
+    public MapWorld getWorld() {
         return world;
     }
 
-    public Location setWorld(World world){
+    public Location setWorld(MapWorld world){
         return new Location(world, this.x, this.y, this.z, this.yaw, this.pitch);
     }
 
@@ -420,14 +421,14 @@ public class Location {
 
     public static class Builder {
 
-        private World world = null;
+        private MapWorld world = null;
         private double x = 0;
         private double y = 64;
         private double z = 0;
         private float yaw = 0;
         private float pitch = 0;
 
-        public Builder setWorld(World world) {
+        public Builder setWorld(MapWorld world) {
             this.world = world;
             return this;
         }

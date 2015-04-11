@@ -1,10 +1,13 @@
 package nl.jk_5.pumpkin.server;
 
+import jk_5.eventbus.Event;
+import jk_5.eventbus.EventBus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.postgresql.Driver;
 
 import nl.jk_5.pumpkin.api.mappack.MappackRegistry;
+import nl.jk_5.pumpkin.server.multiworld.MapLoader;
 import nl.jk_5.pumpkin.server.sql.SqlMappackRegistry;
 import nl.jk_5.pumpkin.server.sql.SqlServiceImpl;
 import nl.jk_5.pumpkin.server.sql.SqlTableManager;
@@ -20,12 +23,13 @@ public class Pumpkin {
     private static final Logger logger = LogManager.getLogger();
 
     private final MappackRegistry mappackRegistry = new SqlMappackRegistry();
+    private final EventBus eventBus = new EventBus();
 
     private ServerConnection serverConnection;
     private SqlService sqlService = new SqlServiceImpl();
 
     public void load(){
-
+        eventBus.register(MapLoader.instance());
     }
 
     public void initialize(){
@@ -54,5 +58,14 @@ public class Pumpkin {
 
     public MappackRegistry getMappackRegistry() {
         return mappackRegistry;
+    }
+
+    public EventBus getEventBus() {
+        return eventBus;
+    }
+
+    public <T extends Event> T postEvent(T event){
+        eventBus.post(event);
+        return event;
     }
 }

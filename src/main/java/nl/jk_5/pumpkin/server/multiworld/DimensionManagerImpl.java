@@ -120,10 +120,6 @@ public final class DimensionManagerImpl {
         world.getWorldInfo().setGameType(mcserver.getGameType());
     }
 
-    public WorldServer getVanillaWorld(int dimension){
-        return this.vanillaWorlds.get(dimension);
-    }
-
     public MapWorld getWorld(int dimension){
         return this.worlds.get(dimension);
     }

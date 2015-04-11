@@ -7,6 +7,7 @@ import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
+import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
 import nl.jk_5.pumpkin.server.util.Location;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 import nl.jk_5.pumpkin.server.util.interfaces.PlayerEntity;
@@ -24,6 +25,6 @@ public abstract class MixinEntityPlayer extends EntityLivingBase implements Play
 
     @Override
     public Location getLocation() {
-        return new Location(this.worldObj, this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
+        return new Location(DimensionManagerImpl.instance().getWorld(this.worldObj.provider.getDimensionId()), this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
     }
 }

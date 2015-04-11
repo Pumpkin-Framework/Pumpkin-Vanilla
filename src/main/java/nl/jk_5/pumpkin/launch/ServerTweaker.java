@@ -42,6 +42,8 @@ public class ServerTweaker implements ITweaker {
         loader.addClassLoaderExclusion("nl.jk_5.pumpkin.server.mixin.");
         loader.addClassLoaderExclusion("nl.jk_5.pumpkin.launch.");
 
+        loader.registerTransformer("nl.jk_5.pumpkin.launch.transformer.EventSubscriptionTransformer");
+
         logger.info("Applying runtime deobfuscation...");
         if (isObfuscated()) {
             Launch.blackboard.put("pumpkin.deobf-srg", Paths.get("bin", "deobf.srg.gz"));
@@ -57,10 +59,9 @@ public class ServerTweaker implements ITweaker {
 
         logger.info("Initializing Mixin environment...");
         MixinBootstrap.init();
-        MixinEnvironment env = MixinEnvironment.getCurrentEnvironment();
+        MixinEnvironment env = MixinEnvironment.getDefaultEnvironment();
         env.addConfiguration("mixins.pumpkin.core.json");
         env.setSide(MixinEnvironment.Side.SERVER);
-        loader.registerTransformer(MixinBootstrap.TRANSFORMER_CLASS);
 
         logger.info("Initialization finished. Starting Minecraft server...");
     }

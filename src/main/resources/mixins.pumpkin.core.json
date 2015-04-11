@@ -8,6 +8,7 @@
     "server.dedicated.MixinDedicatedServer",
     "server.dedicated.MixinPropertyManager",
     "server.dedicated.MixinDedicatedPlayerList",
+    "server.management.MixinServerConfigurationManager",
     "world.MixinWorldServer",
     "world.MixinWorldProvider",
     "world.chunk.storage.MixinAnvilSaveHandler"
