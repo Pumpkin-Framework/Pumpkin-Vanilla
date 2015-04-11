@@ -1,4 +1,4 @@
-package nl.jk_5.pumpkin.server.mixin.server.dedicated;
+package nl.jk_5.pumpkin.server.mixin.core.server.dedicated;
 
 import gnu.trove.map.hash.TObjectIntHashMap;
 import net.minecraft.server.dedicated.DedicatedPlayerList;

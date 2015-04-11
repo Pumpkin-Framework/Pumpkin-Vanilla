@@ -72,6 +72,6 @@ public class ServerTweaker implements ITweaker {
 
     @Override
     public String[] getLaunchArguments() {
-        return new String[]{"nogui"};
+        return new String[0];
     }
 }

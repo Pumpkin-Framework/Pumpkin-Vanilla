@@ -9,4 +9,6 @@ public interface Mappack {
     String getName();
 
     Collection<MappackAuthor> getAuthors();
+
+    Collection<MappackWorld> getWorlds();
 }

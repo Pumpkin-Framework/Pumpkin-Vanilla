@@ -20,7 +20,9 @@ public class Settings {
     private static final Config config;
 
     public static final Config minecraft;
+    public static final ServerSettings server;
     public static final SqlSettings sql;
+    public static final int lobbyMappack;
 
     static {
         logger = LogManager.getLogger();
@@ -48,6 +50,8 @@ public class Settings {
 
         minecraft = config.getConfig("minecraft");
         sql = new SqlSettings(config.getConfig("sql"));
+        server = new ServerSettings(config.getConfig("server"));
+        lobbyMappack = config.getInt("lobbyMappack");
 
         logger.info("Config is ready");
     }

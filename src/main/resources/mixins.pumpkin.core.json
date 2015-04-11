@@ -1,13 +1,15 @@
 {
   "required": true,
-  "package": "nl.jk_5.pumpkin.server.mixin",
+  "package": "nl.jk_5.pumpkin.server.mixin.core",
   "refmap": "mixins.pumpkin.refmap.json",
   "server": [
-    "MixinGameProfile",
     "entity.player.MixinEntityPlayer",
     "server.MixinMinecraftServer",
     "server.dedicated.MixinDedicatedServer",
     "server.dedicated.MixinPropertyManager",
-    "server.dedicated.MixinDedicatedPlayerList"
+    "server.dedicated.MixinDedicatedPlayerList",
+    "world.MixinWorldServer",
+    "world.MixinWorldProvider",
+    "world.chunk.storage.MixinAnvilSaveHandler"
   ]
 }

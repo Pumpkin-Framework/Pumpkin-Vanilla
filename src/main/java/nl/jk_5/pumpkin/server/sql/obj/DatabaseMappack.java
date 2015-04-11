@@ -7,8 +7,10 @@ import com.j256.ormlite.table.DatabaseTable;
 
 import nl.jk_5.pumpkin.api.mappack.Mappack;
 import nl.jk_5.pumpkin.api.mappack.MappackAuthor;
+import nl.jk_5.pumpkin.api.mappack.MappackWorld;
 
 import java.util.Collection;
+import java.util.Date;
 
 @DatabaseTable(tableName = "mappacks")
 public class DatabaseMappack implements Mappack {
@@ -18,6 +20,21 @@ public class DatabaseMappack implements Mappack {
 
     @DatabaseField
     private String name;
+
+    @DatabaseField
+    private String description;
+
+    @DatabaseField(columnName = "public")
+    private boolean isPublic;
+
+    @DatabaseField
+    private String version;
+
+    @DatabaseField(columnName = "description_by", foreign = true)
+    private DatabaseUser descriptionBy;
+
+    @DatabaseField(columnName = "description_updated")
+    private Date descriptionUpdated;
 
     @ForeignCollectionField
     private ForeignCollection<DatabaseMappackAuthor> authors;
@@ -54,11 +71,14 @@ public class DatabaseMappack implements Mappack {
         return ((Collection) this.authors);
     }
 
-    public Collection<DatabaseMappackTeam> getTeams() {
-        return teams;
+    @Override
+    public Collection<MappackWorld> getWorlds() {
+        //TODO: this is ugly, but java compiler is being stupid
+        //noinspection unchecked
+        return ((Collection) this.worlds);
     }
 
-    public Collection<DatabaseMappackWorld> getWorlds() {
-        return worlds;
+    public Collection<DatabaseMappackTeam> getTeams() {
+        return teams;
     }
 }

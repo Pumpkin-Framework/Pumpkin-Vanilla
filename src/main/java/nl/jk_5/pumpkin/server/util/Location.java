@@ -413,4 +413,52 @@ public class Location {
     public Location copy() {
         return new Location(this.world, this.getX(), this.getY(), this.getZ(), this.pitch, this.yaw);
     }
+
+    public static Builder builder(){
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private World world = null;
+        private double x = 0;
+        private double y = 64;
+        private double z = 0;
+        private float yaw = 0;
+        private float pitch = 0;
+
+        public Builder setWorld(World world) {
+            this.world = world;
+            return this;
+        }
+
+        public Builder setX(double x) {
+            this.x = x;
+            return this;
+        }
+
+        public Builder setY(double y) {
+            this.y = y;
+            return this;
+        }
+
+        public Builder setZ(double z) {
+            this.z = z;
+            return this;
+        }
+
+        public Builder setYaw(float yaw) {
+            this.yaw = yaw;
+            return this;
+        }
+
+        public Builder setPitch(float pitch) {
+            this.pitch = pitch;
+            return this;
+        }
+
+        public Location build(){
+            return new Location(this.world, this.x, this.y, this.z, this.yaw, this.pitch);
+        }
+    }
 }

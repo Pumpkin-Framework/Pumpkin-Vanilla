@@ -3,11 +3,9 @@ package nl.jk_5.pumpkin.server.sql;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.support.ConnectionSource;
-import com.j256.ormlite.table.TableUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.jk_5.pumpkin.api.mappack.MappackAuthor;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.sql.obj.*;
 
@@ -43,12 +41,6 @@ public class SqlTableManager {
             teamsDao = createTable(DatabaseTeam.class);
             mappackTeamDao = createTable(DatabaseMappackTeam.class);
 
-            DatabaseMappack mp = mappackDao.queryForId(1);
-            logger.info(mp.getName());
-            for (MappackAuthor author : mp.getAuthors()) {
-                logger.info(author.getUser().getFullName() + ": " + author.getRole());
-            }
-
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -58,7 +50,7 @@ public class SqlTableManager {
         Dao<T, ID> dao = null;
         try{
             dao = DaoManager.createDao(conn, cls);
-            TableUtils.createTableIfNotExists(conn, cls);
+            //TableUtils.createTableIfNotExists(conn, cls);
         }catch(SQLException e){
             logger.error("Error while creating table for " + cls.getSimpleName());
         }

@@ -1,4 +1,4 @@
-package nl.jk_5.pumpkin.server.mixin.server.dedicated;
+package nl.jk_5.pumpkin.server.mixin.core.server.dedicated;
 
 import net.minecraft.server.dedicated.DedicatedServer;
 import org.spongepowered.asm.mixin.Mixin;

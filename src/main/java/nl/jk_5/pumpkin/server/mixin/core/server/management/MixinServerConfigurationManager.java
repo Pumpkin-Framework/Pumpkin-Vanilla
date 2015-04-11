@@ -1,4 +1,4 @@
-package nl.jk_5.pumpkin.server.mixin.server.management;
+package nl.jk_5.pumpkin.server.mixin.core.server.management;
 
 import net.minecraft.server.management.ServerConfigurationManager;
 import org.spongepowered.asm.mixin.Mixin;
