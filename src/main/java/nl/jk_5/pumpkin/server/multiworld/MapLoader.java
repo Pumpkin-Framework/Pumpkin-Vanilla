@@ -2,19 +2,26 @@ package nl.jk_5.pumpkin.server.multiworld;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import jk_5.eventbus.EventHandler;
+import net.minecraft.server.MinecraftServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.jk_5.pumpkin.api.mappack.*;
 import nl.jk_5.pumpkin.server.Pumpkin;
+import nl.jk_5.pumpkin.server.event.player.PlayerRespawnEvent;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.settings.Settings;
+import nl.jk_5.pumpkin.server.util.Location;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nonnull;
 
 public class MapLoader {
@@ -22,6 +29,8 @@ public class MapLoader {
     private static final MapLoader INSTANCE = new MapLoader();
     private static final Logger logger = LogManager.getLogger();
     private static final File mapsDir;
+
+    private final AtomicInteger nextId = new AtomicInteger(0);
 
     static {
         mapsDir = new File("maps");
@@ -72,12 +81,41 @@ public class MapLoader {
         }
     }
 
+    public ListenableFuture<Map> createMap(final Mappack mappack){
+        final SettableFuture<Map> future = SettableFuture.create();
+        Pumpkin.instance().getExecutor().submit(new Runnable() {
+            @Override
+            public void run() {
+                final int id = nextId.getAndIncrement();
+                final File dir = new File(mapsDir, "map_" + id);
+                dir.mkdir();
+                try {
+                    prepareMappack(mappack, dir);
+                } catch (Exception e) {
+                    logger.warn("Exception while loading mappack", e);
+                    return;
+                }
+                MinecraftServer.getServer().addScheduledTask(new Runnable() {
+                    @Override
+                    public void run() {
+                        Map map = new Map(mappack, dir);
+                        registerMap(map);
+                        loadMappackWorlds(map, mappack, "map_" + id);
+                        future.set(map);
+                    }
+                });
+            }
+        });
+        return future;
+    }
+
     public Map getLobby() {
         return lobby;
     }
 
     private void prepareMappack(Mappack mappack, File targetDir) throws Exception {
         //TODO
+
     }
 
     private void loadMappackWorlds(Map map, Mappack mappack, String saveDir){
@@ -98,7 +136,7 @@ public class MapLoader {
                 @Nonnull
                 @Override
                 public Dimension getDimension() {
-                    return Dimension.parse(world.getDimension());
+                    return world.getDimension();
                 }
 
                 @Nonnull
@@ -132,6 +170,11 @@ public class MapLoader {
 
     public Collection<MapWorld> getWorlds(Map map){
         return this.mapWorlds.get(map);
+    }
+
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent.Pre event){
+        event.setRespawnLocation(Location.builder().setWorld(DimensionManagerImpl.instance().getWorld(2)).fromBlockPos(DimensionManagerImpl.instance().getWorld(2).getConfig().getSpawnpoint().toBlockPos()).build());
     }
 
     public static MapLoader instance(){

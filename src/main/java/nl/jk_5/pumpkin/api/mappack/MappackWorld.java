@@ -10,7 +10,7 @@ public interface MappackWorld {
 
     String getGenerator();
 
-    String getDimension();
+    Dimension getDimension();
 
     boolean isDefault();
 

@@ -16,6 +16,8 @@ import nl.jk_5.pumpkin.server.web.ServerConnection;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Pumpkin {
 
@@ -24,6 +26,7 @@ public class Pumpkin {
 
     private final MappackRegistry mappackRegistry = new SqlMappackRegistry();
     private final EventBus eventBus = new EventBus();
+    private final ExecutorService executor = Executors.newCachedThreadPool();
 
     private ServerConnection serverConnection;
     private SqlService sqlService = new SqlServiceImpl();
@@ -60,8 +63,8 @@ public class Pumpkin {
         return mappackRegistry;
     }
 
-    public EventBus getEventBus() {
-        return eventBus;
+    public ExecutorService getExecutor() {
+        return executor;
     }
 
     public <T extends Event> T postEvent(T event){

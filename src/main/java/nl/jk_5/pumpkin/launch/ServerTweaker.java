@@ -17,6 +17,8 @@ public class ServerTweaker implements ITweaker {
 
     private static final Logger logger = LogManager.getLogger();
 
+    public static boolean isObfuscated = false;
+
     private static boolean isObfuscated() {
         try {
             return Launch.classLoader.getClassBytes("net.minecraft.world.World") == null;
@@ -42,10 +44,12 @@ public class ServerTweaker implements ITweaker {
         loader.addClassLoaderExclusion("nl.jk_5.pumpkin.server.mixin.");
         loader.addClassLoaderExclusion("nl.jk_5.pumpkin.launch.");
 
+        loader.registerTransformer("nl.jk_5.pumpkin.launch.transformer.MinecraftServerTransformer");
         loader.registerTransformer("nl.jk_5.pumpkin.launch.transformer.EventSubscriptionTransformer");
 
         logger.info("Applying runtime deobfuscation...");
-        if (isObfuscated()) {
+        isObfuscated = isObfuscated();
+        if (isObfuscated) {
             Launch.blackboard.put("pumpkin.deobf-srg", Paths.get("bin", "deobf.srg.gz"));
             loader.registerTransformer("nl.jk_5.pumpkin.launch.transformer.DeobfuscationTransformer");
             logger.info("Runtime deobfuscation is applied.");

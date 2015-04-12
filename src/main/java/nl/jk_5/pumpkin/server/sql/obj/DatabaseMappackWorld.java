@@ -3,6 +3,7 @@ package nl.jk_5.pumpkin.server.sql.obj;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import nl.jk_5.pumpkin.api.mappack.Dimension;
 import nl.jk_5.pumpkin.api.mappack.MappackWorld;
 import nl.jk_5.pumpkin.server.util.Location;
 
@@ -64,8 +65,8 @@ public class DatabaseMappackWorld implements MappackWorld {
     }
 
     @Override
-    public String getDimension() {
-        return dimension;
+    public Dimension getDimension() {
+        return Dimension.parse(dimension);
     }
 
     @Override
