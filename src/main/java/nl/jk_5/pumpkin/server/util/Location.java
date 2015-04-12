@@ -458,6 +458,13 @@ public class Location {
             return this;
         }
 
+        public Builder fromBlockPos(BlockPos pos){
+            this.x = pos.getX();
+            this.y = pos.getY();
+            this.z = pos.getZ();
+            return this;
+        }
+
         public Location build(){
             return new Location(this.world, this.x, this.y, this.z, this.yaw, this.pitch);
         }

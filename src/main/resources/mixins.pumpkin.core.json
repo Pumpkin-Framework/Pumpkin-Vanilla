@@ -11,6 +11,8 @@
     "server.management.MixinServerConfigurationManager",
     "world.MixinWorldServer",
     "world.MixinWorldProvider",
-    "world.chunk.storage.MixinAnvilSaveHandler"
+    "world.chunk.storage.MixinAnvilSaveHandler",
+    "world.chunk.storage.MixinAnvilSaveConverter",
+    "world.storage.MixinSaveHandler"
   ]
 }

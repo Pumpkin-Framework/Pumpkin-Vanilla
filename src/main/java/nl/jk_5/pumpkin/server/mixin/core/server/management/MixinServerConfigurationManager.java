@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import io.netty.buffer.Unpooled;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetHandlerPlayServer;
@@ -14,8 +15,11 @@ import net.minecraft.network.play.server.*;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.management.ItemInWorldManager;
 import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.server.management.ServerConfigurationManager;
+import net.minecraft.stats.StatisticsFile;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
@@ -29,19 +33,28 @@ import org.spongepowered.asm.mixin.Shadow;
 
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.event.player.PlayerJoinServerEvent;
+import nl.jk_5.pumpkin.server.event.player.PlayerRespawnEvent;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
+import nl.jk_5.pumpkin.server.multiworld.DelegatingWorldProvider;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
+import nl.jk_5.pumpkin.server.storage.PlayerNbtManager;
 import nl.jk_5.pumpkin.server.util.Location;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Mixin(ServerConfigurationManager.class)
 public abstract class MixinServerConfigurationManager {
 
     @Shadow private static Logger logger;
     @Shadow private MinecraftServer mcServer;
+    @Shadow private Map<UUID, StatisticsFile> playerStatFiles;
+    @Shadow private List<EntityPlayerMP> playerEntityList;
+    @Shadow private Map<UUID, EntityPlayerMP> uuidToPlayerMap;
 
-    @Shadow public abstract NBTTagCompound readPlayerDataFromFile(EntityPlayerMP playerIn);
+    //@Shadow public abstract NBTTagCompound readPlayerDataFromFile(EntityPlayerMP playerIn);
     @Shadow public abstract void setPlayerGameTypeBasedOnOther(EntityPlayerMP p_72381_1_, EntityPlayerMP p_72381_2_, World worldIn);
     @Shadow public abstract void func_96456_a(ServerScoreboard scoreboardIn, EntityPlayerMP playerIn);
     @Shadow public abstract int getMaxPlayers();
@@ -133,8 +146,9 @@ public abstract class MixinServerConfigurationManager {
 
         this.setPlayerGameTypeBasedOnOther(player, null, spawnWorld.getWrapped());
 
+        int dimid = (spawnWorld.getWrapped().provider instanceof DelegatingWorldProvider) ? ((DelegatingWorldProvider) spawnWorld.getWrapped().provider).getWrapped().getDimension().getId() : 0;
         NetHandlerPlayServer networkHandler = new NetHandlerPlayServer(this.mcServer, netManager, player);
-        networkHandler.sendPacket(new S01PacketJoinGame(player.getEntityId(), player.theItemInWorldManager.getGameType(), worldInfo.isHardcoreModeEnabled(), spawnWorld.getWrapped().provider.getDimensionId(), spawnWorld.getWrapped().getDifficulty(), this.getMaxPlayers(), worldInfo.getTerrainType(), spawnWorld.getWrapped().getGameRules().getGameRuleBooleanValue("reducedDebugInfo")));
+        networkHandler.sendPacket(new S01PacketJoinGame(player.getEntityId(), player.theItemInWorldManager.getGameType(), worldInfo.isHardcoreModeEnabled(), dimid, spawnWorld.getWrapped().getDifficulty(), this.getMaxPlayers(), worldInfo.getTerrainType(), spawnWorld.getWrapped().getGameRules().getGameRuleBooleanValue("reducedDebugInfo")));
         networkHandler.sendPacket(new S3FPacketCustomPayload("MC|Brand", (new PacketBuffer(Unpooled.buffer())).writeString(this.mcServer.getServerModName())));
         networkHandler.sendPacket(new S41PacketServerDifficulty(worldInfo.getDifficulty(), worldInfo.isDifficultyLocked()));
         networkHandler.sendPacket(new S05PacketSpawnPosition(spawnLocation.toBlockPos()));
@@ -186,5 +200,104 @@ public abstract class MixinServerConfigurationManager {
         }
 
         Pumpkin.instance().postEvent(new PlayerJoinServerEvent.Post(player));
+    }
+
+    @Overwrite
+    public EntityPlayerMP recreatePlayerEntity(EntityPlayerMP player, int dimension, boolean conqueredEnd){
+        MapWorld oldWorld = DimensionManagerImpl.instance().getWorld(player.dimension);
+        player.getServerForPlayer().getEntityTracker().removePlayerFromTrackers(player); //Tell the clients to destroy the old entity
+        player.getServerForPlayer().getEntityTracker().untrackEntity(player); //Untrack player
+        player.getServerForPlayer().getPlayerManager().removePlayer(player); //Remove player from the chunk loaders
+        this.playerEntityList.remove(player); //Remove the player from the entity list
+        oldWorld.getWrapped().removePlayerEntityDangerously(player);
+
+        Location deathLocation = Location.builder().fromBlockPos(player.getPosition()).setWorld(oldWorld).setYaw(player.rotationYaw).setPitch(player.rotationPitch).build();
+        BlockPos bedLocation = player.getBedLocation();
+        boolean respawnAtBed = player.isSpawnForced();
+        Location respawnLocation = oldWorld.getConfig().getSpawnpoint().setWorld(oldWorld); //Respawn at world spawn
+
+        Location bedRespawnLocation = null;
+        boolean bedObstructed = false;
+        if(bedLocation != null){
+            BlockPos safeBedSpawn = EntityPlayer.getBedSpawnLocation(oldWorld.getWrapped(), bedLocation, respawnAtBed);
+            if(safeBedSpawn == null){
+                bedObstructed = true;
+            }else{
+                respawnLocation = Location.builder().fromBlockPos(safeBedSpawn).setWorld(oldWorld).build().add(0.5, 0.1, 0.5);
+                bedRespawnLocation = Location.builder().fromBlockPos(bedLocation).setWorld(oldWorld).build();
+            }
+        }
+
+        PlayerRespawnEvent.Pre event = Pumpkin.instance().postEvent(new PlayerRespawnEvent.Pre(player, deathLocation, respawnLocation));
+
+        if(event.getRespawnLocation() != respawnLocation){
+            bedObstructed = false;
+        }
+
+        respawnLocation = event.getRespawnLocation();
+        MapWorld respawnWorld = respawnLocation.getWorld();
+        WorldServer newWorld = respawnWorld.getWrapped();
+
+        player.dimension = newWorld.provider.getDimensionId();
+
+        ItemInWorldManager interactionManager = new ItemInWorldManager(respawnWorld.getWrapped());
+
+        EntityPlayerMP newPlayer = new EntityPlayerMP(this.mcServer, newWorld, player.getGameProfile(), interactionManager);
+        newPlayer.playerNetServerHandler = player.playerNetServerHandler;
+        newPlayer.clonePlayer(player, conqueredEnd);
+        newPlayer.setEntityId(player.getEntityId());
+        newPlayer.func_174817_o(player);
+
+        this.setPlayerGameTypeBasedOnOther(newPlayer, player, newWorld);
+
+        if(bedObstructed){
+            newPlayer.playerNetServerHandler.sendPacket(new S2BPacketChangeGameState(0, 0.0F));
+        }
+        newPlayer.setLocationAndAngles(respawnLocation.getX(), respawnLocation.getY(), respawnLocation.getZ(), respawnLocation.getYaw(), respawnLocation.getPitch());
+        if(bedRespawnLocation != null){
+            newPlayer.setSpawnPoint(bedRespawnLocation.toBlockPos(), respawnAtBed);
+        }
+
+        newWorld.theChunkProviderServer.loadChunk((int) newPlayer.posX >> 4, (int) newPlayer.posZ >> 4);
+
+        //Removed collision check from here to allow for more cool things
+
+        int dimid = (respawnWorld.getWrapped().provider instanceof DelegatingWorldProvider) ? ((DelegatingWorldProvider) respawnWorld.getWrapped().provider).getWrapped().getDimension().getId() : 0;
+        newPlayer.playerNetServerHandler.sendPacket(new S07PacketRespawn(dimid, newPlayer.worldObj.getDifficulty(), newPlayer.worldObj.getWorldInfo().getTerrainType(), newPlayer.theItemInWorldManager.getGameType()));
+        newPlayer.playerNetServerHandler.setPlayerLocation(newPlayer.posX, newPlayer.posY, newPlayer.posZ, newPlayer.rotationYaw, newPlayer.rotationPitch);
+        newPlayer.playerNetServerHandler.sendPacket(new S05PacketSpawnPosition(respawnWorld.getConfig().getSpawnpoint().toBlockPos()));
+        newPlayer.playerNetServerHandler.sendPacket(new S1FPacketSetExperience(newPlayer.experience, newPlayer.experienceTotal, newPlayer.experienceLevel));
+
+        this.updateTimeAndWeatherForPlayer(newPlayer, newWorld);
+        newWorld.getPlayerManager().addPlayer(newPlayer);
+        newWorld.spawnEntityInWorld(newPlayer);
+        this.playerEntityList.add(newPlayer);
+        this.uuidToPlayerMap.put(newPlayer.getUniqueID(), newPlayer);
+        newPlayer.addSelfToInternalCraftingInventory();
+        newPlayer.setHealth(newPlayer.getHealth());
+
+        Pumpkin.instance().postEvent(new PlayerRespawnEvent.Post(newPlayer));
+
+        return newPlayer;
+    }
+
+    @Overwrite
+    public NBTTagCompound readPlayerDataFromFile(EntityPlayerMP player){
+        return PlayerNbtManager.instance().readPlayerData(player);
+    }
+
+    @Overwrite
+    protected void writePlayerData(EntityPlayerMP playerIn){
+        PlayerNbtManager.instance().writePlayerData(playerIn);
+
+        StatisticsFile statisticsfile = this.playerStatFiles.get(playerIn.getUniqueID());
+        if(statisticsfile != null){
+            statisticsfile.saveStatFile();
+        }
+    }
+
+    @Overwrite
+    public String[] getAvailablePlayerDat() {
+        return PlayerNbtManager.instance().getAvailablePlayerDat();
     }
 }

@@ -20,4 +20,6 @@ public class MixinDedicatedServer {
     public void onServerInitialize(CallbackInfoReturnable<Boolean> ci) {
         Pumpkin.instance().initialize();
     }
+
+
 }
