@@ -7,6 +7,7 @@ import com.j256.ormlite.table.DatabaseTable;
 
 import nl.jk_5.pumpkin.api.mappack.Mappack;
 import nl.jk_5.pumpkin.api.mappack.MappackAuthor;
+import nl.jk_5.pumpkin.api.mappack.MappackFile;
 import nl.jk_5.pumpkin.api.mappack.MappackWorld;
 
 import java.util.Collection;
@@ -45,6 +46,9 @@ public class DatabaseMappack implements Mappack {
     @ForeignCollectionField
     private ForeignCollection<DatabaseMappackWorld> worlds;
 
+    @ForeignCollectionField
+    private ForeignCollection<DatabaseMappackFile> files;
+
     public DatabaseMappack() {
     }
 
@@ -66,16 +70,23 @@ public class DatabaseMappack implements Mappack {
 
     @Override
     public Collection<MappackAuthor> getAuthors() {
-        //TODO: this is ugly, but java compiler is being stupid
+        //this is ugly, but java compiler is being stupid
         //noinspection unchecked
         return ((Collection) this.authors);
     }
 
     @Override
     public Collection<MappackWorld> getWorlds() {
-        //TODO: this is ugly, but java compiler is being stupid
+        //this is ugly, but java compiler is being stupid
         //noinspection unchecked
         return ((Collection) this.worlds);
+    }
+
+    @Override
+    public Collection<MappackFile> getFiles() {
+        //this is ugly, but java compiler is being stupid
+        //noinspection unchecked
+        return ((Collection) this.files);
     }
 
     public Collection<DatabaseMappackTeam> getTeams() {

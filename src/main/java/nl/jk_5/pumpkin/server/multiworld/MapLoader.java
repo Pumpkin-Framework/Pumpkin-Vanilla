@@ -4,20 +4,24 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import jk_5.eventbus.EventHandler;
 import net.minecraft.server.MinecraftServer;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.jk_5.pumpkin.api.mappack.*;
 import nl.jk_5.pumpkin.server.Pumpkin;
-import nl.jk_5.pumpkin.server.event.player.PlayerRespawnEvent;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.settings.Settings;
-import nl.jk_5.pumpkin.server.util.Location;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -114,8 +118,28 @@ public class MapLoader {
     }
 
     private void prepareMappack(Mappack mappack, File targetDir) throws Exception {
-        //TODO
-
+        logger.info("Downloading files from server for mappack " + mappack.getName());
+        //TODO: set trusted certificates
+        HttpClient client = HttpClientBuilder.create().disableContentCompression().build();
+        for(MappackFile file : mappack.getFiles()){
+            logger.info("Requesting " + file.getPath() + " (" + file.getFileId() + ")");
+            HttpGet req = new HttpGet("https://pumpkin.jk-5.nl/api/file/" + file.getFileId());
+            HttpResponse res = client.execute(req);
+            InputStream content = null;
+            FileOutputStream outStream = null;
+            try{
+                content = res.getEntity().getContent();
+                File dest = new File(targetDir, file.getPath());
+                dest.getParentFile().mkdirs();
+                outStream = new FileOutputStream(dest);
+                IOUtils.copy(content, outStream);
+            }finally{
+                IOUtils.closeQuietly(content);
+                IOUtils.closeQuietly(outStream);
+            }
+            logger.info("File downloaded");
+        }
+        logger.info("Finished downloading");
     }
 
     private void loadMappackWorlds(Map map, Mappack mappack, String saveDir){
@@ -170,11 +194,6 @@ public class MapLoader {
 
     public Collection<MapWorld> getWorlds(Map map){
         return this.mapWorlds.get(map);
-    }
-
-    @EventHandler
-    public void onRespawn(PlayerRespawnEvent.Pre event){
-        event.setRespawnLocation(Location.builder().setWorld(DimensionManagerImpl.instance().getWorld(2)).fromBlockPos(DimensionManagerImpl.instance().getWorld(2).getConfig().getSpawnpoint().toBlockPos()).build());
     }
 
     public static MapLoader instance(){

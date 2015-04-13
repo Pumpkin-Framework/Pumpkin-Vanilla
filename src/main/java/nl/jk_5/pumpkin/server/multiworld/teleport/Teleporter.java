@@ -10,6 +10,7 @@ import net.minecraft.network.play.server.S07PacketRespawn;
 import net.minecraft.network.play.server.S1DPacketEntityEffect;
 import net.minecraft.network.play.server.S1FPacketSetExperience;
 import net.minecraft.potion.PotionEffect;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import org.apache.commons.lang3.Validate;
@@ -59,13 +60,10 @@ public class Teleporter {
             entity.mountEntity(null);
             mount = teleportEntity(currentWorld, destinationWorld, mount, location, options);
         }
-        double mX = entity.motionX;
-        double mY = entity.motionY;
-        double mZ = entity.motionZ;
         boolean changingworlds = entity.worldObj != destWorld;
-        if(player != null){
-            //TeleportEventFactory.onLinkStart(currentWorld, destinationWorld, player, options);
-        }
+        /*if(player != null){
+            TeleportEventFactory.onLinkStart(currentWorld, destinationWorld, player, options);
+        }*/
         entity.worldObj.updateEntityWithOptionalForce(entity, false);
         if(entity instanceof EntityPlayerMP){
             EntityPlayerMP p = ((EntityPlayerMP) entity);
@@ -91,12 +89,12 @@ public class Teleporter {
         if(changingworlds){
             removeEntityFromWorld(entity.worldObj, entity);
         }
-        if(player != null){
-            //TeleportEventFactory.onExitWorld(currentWorld, destinationWorld, player, options);
-        }
+        /*if(player != null){
+            TeleportEventFactory.onExitWorld(currentWorld, destinationWorld, player, options);
+        }*/
 
         entity.setLocationAndAngles(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
-        destWorld.theChunkProviderServer.loadChunk((int)(location.getBlockX() >> 4), (int)(location.getBlockZ() >> 4));
+        destWorld.theChunkProviderServer.loadChunk(location.getBlockX() >> 4, location.getBlockZ() >> 4);
         if(changingworlds){
             if(!(entity instanceof EntityPlayerMP)){
                 NBTTagCompound entityNBT = new NBTTagCompound();
@@ -113,9 +111,9 @@ public class Teleporter {
             entity.setWorld(destWorld);
         }
         entity.setLocationAndAngles(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
-        if(player != null){
-            //TeleportEventFactory.onEnterWorld(currentWorld, destinationWorld, player, options);
-        }
+        /*if(player != null){
+            TeleportEventFactory.onEnterWorld(currentWorld, destinationWorld, player, options);
+        }*/
         destWorld.updateEntityWithOptionalForce(entity, false);
         entity.setLocationAndAngles(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
         if(entity instanceof EntityPlayerMP){
@@ -128,11 +126,11 @@ public class Teleporter {
         destWorld.updateEntityWithOptionalForce(entity, false);
         if(entity instanceof EntityPlayerMP){
             EntityPlayerMP p = ((EntityPlayerMP) entity);
-            if(player != null){
-                /*NailedPlayer pl = ((NailedPlayer) player);
+            /*if(player != null){
+                NailedPlayer pl = ((NailedPlayer) player);
                 pl.world = location.getWorld();
-                pl.map = pl.world.getMap();*/
-            }
+                pl.map = pl.world.getMap();
+            }*/
             p.theItemInWorldManager.setWorld(destWorld);
             p.mcServer.getConfigurationManager().updateTimeAndWeatherForPlayer(p, destWorld);
             p.mcServer.getConfigurationManager().syncPlayerInventory(p);
@@ -144,11 +142,6 @@ public class Teleporter {
         }
         entity.setLocationAndAngles(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
         //if(player != null) TeleportEventFactory.onEnd(currentWorld, destinationWorld, player, options);
-        /*if(options.isMaintainMomentum()){
-          entity.motionX = mX;
-          entity.motionY = mY;
-          entity.motionZ = mZ;
-        }*/
         if(mount != null){
             if(entity instanceof EntityPlayerMP){
                 destWorld.updateEntityWithOptionalForce(entity, true);
@@ -163,7 +156,7 @@ public class Teleporter {
         return entity;
     }
 
-    public static void removeEntityFromWorld(net.minecraft.world.World world, Entity entity){
+    public static void removeEntityFromWorld(World world, Entity entity){
         if(entity instanceof EntityPlayerMP){
             EntityPlayerMP p = ((EntityPlayerMP) entity);
             p.closeScreen();

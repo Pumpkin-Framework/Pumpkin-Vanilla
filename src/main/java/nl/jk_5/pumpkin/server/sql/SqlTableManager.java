@@ -24,7 +24,7 @@ public class SqlTableManager {
     private static Dao<DatabaseMappackAuthor, Integer> mappackAuthorDao;
     private static Dao<DatabaseUser, Integer> userDao;
     private static Dao<DatabaseMappackWorld, Integer> mappackWorldsDao;
-    private static Dao<DatabaseTeam, Integer> teamsDao;
+    private static Dao<DatabaseMappackFile, Integer> mappackFilesDao;
     private static Dao<DatabaseMappackTeam, Integer> mappackTeamDao;
 
     public static void setupTables(){
@@ -38,7 +38,7 @@ public class SqlTableManager {
             mappackAuthorDao = createTable(DatabaseMappackAuthor.class);
             userDao = createTable(DatabaseUser.class);
             mappackWorldsDao = createTable(DatabaseMappackWorld.class);
-            teamsDao = createTable(DatabaseTeam.class);
+            mappackFilesDao = createTable(DatabaseMappackFile.class);
             mappackTeamDao = createTable(DatabaseMappackTeam.class);
 
         }catch(SQLException e){

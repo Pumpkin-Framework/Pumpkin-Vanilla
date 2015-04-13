@@ -9,26 +9,17 @@ public class DatabaseMappackTeam {
     @DatabaseField(generatedId = true)
     private int id;
 
-    @DatabaseField(foreign = true)
-    private DatabaseTeam team;
-
-    @DatabaseField(foreign = true, foreignAutoRefresh = true)
+    @DatabaseField(foreign = true, foreignAutoRefresh = true, columnName = "map_id")
     private DatabaseMappack mappack;
+
+    @DatabaseField(width = 16)
+    private String name;
 
     public DatabaseMappackTeam() {
     }
 
-    public DatabaseMappackTeam(DatabaseTeam team, DatabaseMappack mappack) {
-        this.team = team;
-        this.mappack = mappack;
-    }
-
     public int getId() {
         return id;
-    }
-
-    public DatabaseTeam getTeam() {
-        return team;
     }
 
     public DatabaseMappack getMappack() {

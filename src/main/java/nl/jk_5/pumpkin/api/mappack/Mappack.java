@@ -11,4 +11,6 @@ public interface Mappack {
     Collection<MappackAuthor> getAuthors();
 
     Collection<MappackWorld> getWorlds();
+
+    Collection<MappackFile> getFiles();
 }
