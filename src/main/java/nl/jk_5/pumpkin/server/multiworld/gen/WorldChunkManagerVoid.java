@@ -22,7 +22,7 @@ public class WorldChunkManagerVoid extends WorldChunkManager {
         BlockPos ret = super.findBiomePosition(x, z, range, biomes, random);
         if(x == 0 && z == 0 && !world.getWorldInfo().isInitialized()){
             if(ret == null){
-                ret = new BlockPos(0, 0, 0);
+                ret = BlockPos.ORIGIN;
             }
             BlockPos spawn = new BlockPos(0, 63, 0);
             if(world.isAirBlock(spawn)){

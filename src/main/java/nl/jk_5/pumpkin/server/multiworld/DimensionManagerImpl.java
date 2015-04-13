@@ -1,10 +1,17 @@
 package nl.jk_5.pumpkin.server.multiworld;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.procedure.TIntObjectProcedure;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.*;
+import net.minecraft.world.MinecraftException;
+import net.minecraft.world.WorldManager;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.ISaveHandler;
 import net.minecraft.world.storage.WorldInfo;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -12,25 +19,25 @@ import nl.jk_5.pumpkin.api.mappack.WorldContext;
 import nl.jk_5.pumpkin.api.mappack.WorldProvider;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.mixin.interfaces.IWorldProvider;
+import nl.jk_5.pumpkin.server.util.WorldInfoHelper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.List;
 
 public final class DimensionManagerImpl {
 
     private static final DimensionManagerImpl INSTANCE = new DimensionManagerImpl();
     private static final Logger logger = LogManager.getLogger();
 
-    private final Hashtable<Integer, WorldProvider> customProviders = new Hashtable<Integer, WorldProvider>();
-    private final Hashtable<Integer, WorldServer> vanillaWorlds = new Hashtable<Integer, WorldServer>();
-    private final Hashtable<Integer, MapWorld> worlds = new Hashtable<Integer, MapWorld>();
-    private final Hashtable<Integer, WorldContext> worldContext = new Hashtable<Integer, WorldContext>();
-    private final List<Integer> dimensions = new ArrayList<Integer>();
-    private final List<Integer> unloadQueue = new ArrayList<Integer>();
+    private final TIntObjectMap<WorldProvider> customProviders = new TIntObjectHashMap<WorldProvider>();
+    private final TIntObjectMap<MapWorld> worlds = new TIntObjectHashMap<MapWorld>();
+    private final TIntObjectMap<WorldContext> worldContext = new TIntObjectHashMap<WorldContext>();
+    private final TIntList dimensions = new TIntArrayList();
+    private final TIntList unloadQueue = new TIntArrayList();
     private final BitSet dimensionMap = new BitSet(java.lang.Long.SIZE << 4);
 
-    public final Hashtable<Integer, long[]> worldTickTimes = new Hashtable<Integer, long[]>();
-
-    private int[] vanillaWorldIdArray = new int[0];
+    public final TIntObjectMap<long[]> worldTickTimes = new TIntObjectHashMap<long[]>();
 
     public DimensionManagerImpl() {
         this.dimensionMap.set(1);
@@ -59,35 +66,34 @@ public final class DimensionManagerImpl {
     }
 
     public int[] getAllDimensionIds() {
-        return vanillaWorldIdArray;
+        return this.worlds.keys();
     }
 
     public void setWorld(int id, WorldServer world) {
         WorldContext context = this.worldContext.get(id);
         if(world != null){
             MapWorld nworld = new MapWorld(world, context);
-            this.vanillaWorlds.put(id, world);
-            this.vanillaWorldIdArray = ArrayUtils.toPrimitive(this.vanillaWorlds.keySet().toArray(new Integer[this.vanillaWorlds.size()]));
             this.worlds.put(id, nworld);
             worldTickTimes.put(id, new long[100]);
             logger.info("Loading dimension " + id + " (" + world.getWorldInfo().getWorldName() + ") (" + nworld.toString() + ")");
         }else{
-            this.vanillaWorlds.remove(id);
-            this.vanillaWorldIdArray = ArrayUtils.toPrimitive(this.vanillaWorlds.keySet().toArray(new Integer[this.vanillaWorlds.size()]));
             this.worlds.remove(id);
             worldContext.remove(id);
             logger.info("Unloading dimension " + id);
         }
-        List<WorldServer> builder = new ArrayList<WorldServer>();
-        if(this.vanillaWorlds.get(0) != null){
-            builder.add(vanillaWorlds.get(0));
+        final List<WorldServer> builder = new ArrayList<WorldServer>();
+        if(this.worlds.containsKey(0)){
+            builder.add(worlds.get(0).getWrapped());
         }
-        for(Map.Entry<Integer, WorldServer> e : this.vanillaWorlds.entrySet()){
-            int dim = e.getKey();
-            if(dim < -1 || dim > 1){
-                builder.add(e.getValue());
+        this.worlds.forEachEntry(new TIntObjectProcedure<MapWorld>() {
+            @Override
+            public boolean execute(int dim, MapWorld world) {
+                if(dim < -1 || dim > 1){
+                    builder.add(world.getWrapped());
+                }
+                return true;
             }
-        }
+        });
         MinecraftServer.getServer().worldServers = builder.toArray(new WorldServer[builder.size()]);
     }
 
@@ -98,38 +104,20 @@ public final class DimensionManagerImpl {
         MinecraftServer mcserver = MinecraftServer.getServer();
         String name = ctx.getName() + "/" + ctx.getSubName();
         ISaveHandler saveHandler = mcserver.getActiveAnvilConverter().getSaveLoader(name, true);
-        WorldInfo worldInfo = saveHandler.loadWorldInfo(); //Attempt to load level.dat
 
-        WorldSettings worldSettings;
-
-        if(worldInfo == null){ //If the level.dat does not exist, create a new one
-            //TODO: populate this from the mappack that may or may not exist
-            //Arguments: seed, gameType, enable structures, hardcore mode, worldType
-            worldSettings = new WorldSettings(0, WorldSettings.GameType.ADVENTURE, false, false, WorldType.DEFAULT);
-            worldSettings.setWorldName(""); //Generator settings (for flat)
-            worldInfo = new WorldInfo(worldSettings, name);
-        }else{
-            worldSettings = new WorldSettings(worldInfo);
-        }
+        WorldInfo worldInfo = new WorldInfo();
+        WorldInfoHelper.apply(worldInfo, ctx.getConfig());
+        logger.info(worldInfo.getNBTTagCompound().toString());
 
         worldContext.put(dimension, ctx);
         WorldServer world = new WorldServer(mcserver, saveHandler, worldInfo, dimension, mcserver.theProfiler);
         world.init();
         world.addWorldAccess(new WorldManager(mcserver, world));
         //NailedEventFactory.fireWorldLoad(world);
-        world.getWorldInfo().setGameType(mcserver.getGameType());
     }
 
     public MapWorld getWorld(int dimension){
         return this.worlds.get(dimension);
-    }
-
-    public WorldServer[] getVanillaWorlds(){
-        return this.vanillaWorlds.values().toArray(new WorldServer[this.vanillaWorlds.size()]);
-    }
-
-    public MapWorld[] getWorlds(){
-        return this.worlds.values().toArray(new MapWorld[this.worlds.size()]);
     }
 
     public net.minecraft.world.WorldProvider createProviderFor(int dim){
@@ -146,25 +134,23 @@ public final class DimensionManagerImpl {
     }
 
     public void unloadWorlds(){
-        for(Integer id : this.unloadQueue){
-            WorldServer w = this.vanillaWorlds.get(id);
-            try{
-                if(w != null){
+        TIntIterator it = this.unloadQueue.iterator();
+        while(it.hasNext()){
+            int id = it.next();
+            if(worlds.containsKey(id)){
+                WorldServer w = worlds.get(id).getWrapped();
+                try{
                     w.saveAllChunks(true, null);
-                }else{
-                    logger.warn("Unexpected world unload. World " + id + " is already unloaded! Skipping it");
-                }
-            }catch(MinecraftException e){
-                logger.warn("Error while unloading world " + id, e);
-            }finally{
-                if(w != null){
+                }catch(MinecraftException e){
+                    logger.warn("Error while unloading world " + id, e);
+                }finally{
                     //NailedEventFactory.fireWorldUnload(w);
                     w.flush();
-                    this.setWorld(id, null);
+                    setWorld(id, null);
                 }
+                it.remove();
             }
         }
-        this.unloadQueue.clear();
     }
 
     public int getNextFreeDimensionId(){

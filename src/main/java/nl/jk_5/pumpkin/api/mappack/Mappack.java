@@ -13,4 +13,6 @@ public interface Mappack {
     Collection<MappackWorld> getWorlds();
 
     Collection<MappackFile> getFiles();
+
+    Collection<GameRule> getGameRules();
 }

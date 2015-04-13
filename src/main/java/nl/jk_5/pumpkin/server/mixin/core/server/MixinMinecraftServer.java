@@ -25,7 +25,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import nl.jk_5.pumpkin.api.mappack.WorldContext;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
@@ -188,12 +187,7 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
 
     @Overwrite
     public WorldServer worldServerForDimension(int dimension) {
-        WorldServer world = DimensionManagerImpl.instance().getWorld(dimension).getWrapped();
-        if(world == null){
-            DimensionManagerImpl.instance().initWorld(dimension, new WorldContext(null, null, null));
-            world = DimensionManagerImpl.instance().getWorld(dimension).getWrapped();
-        }
-        return world;
+        return DimensionManagerImpl.instance().getWorld(dimension).getWrapped();
     }
 
     @Overwrite

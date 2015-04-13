@@ -1,11 +1,8 @@
 package nl.jk_5.pumpkin.launch.transformer.util;
 
 import com.google.common.base.Objects;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public class Mapping {
@@ -13,10 +10,6 @@ public class Mapping {
     public String owner;
     public String name;
     public String desc;
-
-    public Mapping(String owner) {
-        this(owner, "", "");
-    }
 
     public Mapping(String owner, String name, String desc) {
         this.owner = owner;
@@ -28,74 +21,12 @@ public class Mapping {
         }
     }
 
-    public Mapping(Mapping descmap, String subclass) {
-        this(subclass, descmap.name, descmap.desc);
-    }
-
-    public static Mapping fromDesc(String s) {
-        int lastDot = s.lastIndexOf('.');
-        if(lastDot < 0){
-            return new Mapping(s, "", "");
-        }
-        int sep = s.indexOf('('); //methods
-        int sepEnd = sep;
-        if(sep < 0){
-            sep = s.indexOf(' '); //some stuffs
-            sepEnd = sep + 1;
-        }
-        if(sep < 0){
-            sep = s.indexOf(':'); //fields
-            sepEnd = sep + 1;
-        }
-        if(sep < 0){
-            return new Mapping(s.substring(0, lastDot), s.substring(lastDot + 1), "");
-        }
-
-        return new Mapping(s.substring(0, lastDot), s.substring(lastDot + 1, sep), s.substring(sepEnd));
-    }
-
-    public Mapping subclass(String subclass) {
-        return new Mapping(this, subclass);
-    }
-
     public boolean matches(MethodNode node) {
         return this.name.equals(node.name) && this.desc.equals(node.desc);
     }
 
-    public boolean matches(MethodInsnNode node) {
-        return this.owner.equals(node.owner) && this.name.equals(node.name) && this.desc.equals(node.desc);
-    }
-
-    public void visitTypeInsn(MethodVisitor mv, int opcode) {
-        mv.visitTypeInsn(opcode, this.owner);
-    }
-
-    public void visitMethodInsn(MethodVisitor mv, int opcode) {
-        mv.visitMethodInsn(opcode, this.owner, this.name, this.desc);
-    }
-
-    public void visitFieldInsn(MethodVisitor mv, int opcode) {
-        mv.visitFieldInsn(opcode, this.owner, this.name, this.desc);
-    }
-
-    public boolean isClass(String name) {
-        return name.replace('.', '/').equals(this.owner);
-    }
-
-    public boolean matches(String name, String desc) {
-        return this.name.equals(name) && this.desc.equals(desc);
-    }
-
     public boolean matches(FieldNode node) {
         return this.name.equals(node.name) && this.desc.equals(node.desc);
-    }
-
-    public boolean matches(FieldInsnNode node) {
-        return this.owner.equals(node.owner) && this.name.equals(node.name) && this.desc.equals(node.desc);
-    }
-
-    public String javaClass() {
-        return this.owner.replace('/', '.');
     }
 
     @Override
@@ -160,13 +91,5 @@ public class Mapping {
         }
 
         return this;
-    }
-
-    public MethodInsnNode toMethodInsn(int opcode) {
-        return new MethodInsnNode(opcode, this.owner, this.name, this.desc);
-    }
-
-    public Mapping copy() {
-        return new Mapping(this.owner, this.name, this.desc);
     }
 }

@@ -5,10 +5,7 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 
-import nl.jk_5.pumpkin.api.mappack.Mappack;
-import nl.jk_5.pumpkin.api.mappack.MappackAuthor;
-import nl.jk_5.pumpkin.api.mappack.MappackFile;
-import nl.jk_5.pumpkin.api.mappack.MappackWorld;
+import nl.jk_5.pumpkin.api.mappack.*;
 
 import java.util.Collection;
 import java.util.Date;
@@ -49,6 +46,9 @@ public class DatabaseMappack implements Mappack {
     @ForeignCollectionField
     private ForeignCollection<DatabaseMappackFile> files;
 
+    @ForeignCollectionField
+    private ForeignCollection<DatabaseGamerule> gamerules;
+
     public DatabaseMappack() {
     }
 
@@ -87,6 +87,13 @@ public class DatabaseMappack implements Mappack {
         //this is ugly, but java compiler is being stupid
         //noinspection unchecked
         return ((Collection) this.files);
+    }
+
+    @Override
+    public Collection<GameRule> getGameRules() {
+        //this is ugly, but java compiler is being stupid
+        //noinspection unchecked
+        return ((Collection) this.gamerules);
     }
 
     public Collection<DatabaseMappackTeam> getTeams() {

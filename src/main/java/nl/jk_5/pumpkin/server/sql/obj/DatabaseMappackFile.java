@@ -20,6 +20,9 @@ public class DatabaseMappackFile implements MappackFile {
     @DatabaseField(columnName = "file_id")
     private String fileId;
 
+    @DatabaseField(defaultValue = "TRUE")
+    private boolean required;
+
     public int getId() {
         return id;
     }
@@ -28,11 +31,18 @@ public class DatabaseMappackFile implements MappackFile {
         return mappack;
     }
 
+    @Override
     public String getPath() {
         return path;
     }
 
+    @Override
     public String getFileId() {
         return fileId;
+    }
+
+    @Override
+    public boolean isRequired() {
+        return required;
     }
 }

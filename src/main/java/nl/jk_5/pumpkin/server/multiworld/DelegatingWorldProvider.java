@@ -11,7 +11,6 @@ import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.multiworld.gen.ChunkProviderVoid;
 import nl.jk_5.pumpkin.server.multiworld.gen.WorldChunkManagerVoid;
-import nl.jk_5.pumpkin.server.util.Location;
 
 public class DelegatingWorldProvider extends net.minecraft.world.WorldProvider {
 
@@ -37,7 +36,7 @@ public class DelegatingWorldProvider extends net.minecraft.world.WorldProvider {
 
     @Override
     public IChunkProvider createChunkGenerator() {
-        if(wrapped.getType().equals("overworld")){
+        if(wrapped.getType().equals("overworld") || wrapped.getType().equals("large-biomes") || wrapped.getType().equals("amplified")){
             return new ChunkProviderGenerate(this.worldObj, this.worldObj.getSeed(), this.worldObj.getWorldInfo().isMapFeaturesEnabled(), ""); //TODO: is the "" correct? Extra options
         }else if(wrapped.getType().equals("void")){
             return new ChunkProviderVoid(this.worldObj);
@@ -48,13 +47,13 @@ public class DelegatingWorldProvider extends net.minecraft.world.WorldProvider {
         }else if(wrapped.getType().equals("flat")){
             return new ChunkProviderFlat(this.worldObj, this.worldObj.getSeed(), this.worldObj.getWorldInfo().isMapFeaturesEnabled(), this.wrapped.getOptions());
         }else{
-            throw new IllegalArgumentException("Unknown world type " + this.wrapped.getType());
+            throw new IllegalArgumentException("Unknown generator type " + this.wrapped.getType());
         }
     }
 
     @Override
     protected void registerWorldChunkManager() {
-        if(wrapped.getType().equals("overworld")){
+        if(wrapped.getType().equals("overworld") || wrapped.getType().equals("large-biomes") || wrapped.getType().equals("amplified")){
             this.worldChunkMgr = new WorldChunkManager(this.worldObj);
         }else if(wrapped.getType().equals("void")){
             this.worldChunkMgr = new WorldChunkManagerVoid(this.worldObj);
@@ -69,13 +68,8 @@ public class DelegatingWorldProvider extends net.minecraft.world.WorldProvider {
             FlatGeneratorInfo info = FlatGeneratorInfo.createFlatGeneratorFromString(this.wrapped.getOptions());
             this.worldChunkMgr = new WorldChunkManagerHell(BiomeGenBase.getBiome(info.getBiome()), 0.5F);
         }else{
-            throw new IllegalArgumentException("Unknown world type " + this.wrapped.getType());
+            throw new IllegalArgumentException("Unknown generator type " + this.wrapped.getType());
         }
-    }
-
-    //@Override //TODO
-    public Location getSpawnPoint() { //TODO
-        return Location.builder().setX(0).setY(0).setZ(0).build(); //this.getWorld().getConfig().spawnPoint();
     }
 
     @Override

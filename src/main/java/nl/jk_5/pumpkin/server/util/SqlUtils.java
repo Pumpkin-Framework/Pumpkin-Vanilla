@@ -6,7 +6,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import javax.annotation.Nullable;
 
-public class SqlUtils {
+public final class SqlUtils {
+
+    private SqlUtils() {
+    }
 
     public static void close(@Nullable Connection conn){
         if(conn != null){

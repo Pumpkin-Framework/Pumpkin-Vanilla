@@ -157,7 +157,7 @@ public abstract class MixinServerConfigurationManager {
 
         //Send achievements and stats
         player.getStatFile().func_150877_d();
-        player.getStatFile().func_150884_b(player);
+        player.getStatFile().sendAchievements(player);
 
         //Set scoreboard stuff
         this.func_96456_a((ServerScoreboard) spawnWorld.getWrapped().getScoreboard(), player);

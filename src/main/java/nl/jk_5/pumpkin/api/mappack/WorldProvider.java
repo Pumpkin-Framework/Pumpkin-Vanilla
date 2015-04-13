@@ -23,7 +23,7 @@ public interface WorldProvider {
     @Nonnull
     Dimension getDimension();
 
-    //TODO: this is temporary
-    @Nonnull String getType();
-    @Nonnull String getOptions();
+    //TODO: Maybe an enum?
+    String getType();
+    String getOptions();
 }

@@ -5,4 +5,6 @@ public interface MappackFile {
     String getFileId();
 
     String getPath();
+
+    boolean isRequired();
 }

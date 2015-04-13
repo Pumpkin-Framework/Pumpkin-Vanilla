@@ -34,9 +34,7 @@ public class SqlServiceImpl implements SqlService, Closeable {
     static {
         ImmutableMap.Builder<String, Properties> build = ImmutableMap.builder();
         final Properties mySqlProps = new Properties();
-        mySqlProps.setProperty("useConfigs",
-                "maxPerformance"); // Config options based on http://assets.en.oreilly
-                // .com/1/event/21/Connector_J%20Performance%20Gems%20Presentation.pdf
+        mySqlProps.setProperty("useConfigs", "maxPerformance"); // Config options based on http://assets.en.oreilly.com/1/event/21/Connector_J%20Performance%20Gems%20Presentation.pdf
         build.put("com.mysql.jdbc.Driver", mySqlProps);
         build.put("org.mariadb.jdbc.Driver", mySqlProps);
 

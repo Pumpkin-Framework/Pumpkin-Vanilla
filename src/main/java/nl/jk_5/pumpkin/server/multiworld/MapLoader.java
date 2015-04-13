@@ -57,8 +57,8 @@ public class MapLoader {
     public Map createLobby(){
         Mappack mappack = Pumpkin.instance().getMappackRegistry().getById(Settings.lobbyMappack);
         if(mappack == null){
-            logger.error("Was not able to load the lobby mappack");
-            logger.error("No mappack with id {} was found. Shutting down");
+            logger.fatal("Was not able to load the lobby mappack");
+            logger.fatal("No mappack with id {} was found. Shutting down");
             System.exit(1);
             return null;
         }
@@ -70,16 +70,23 @@ public class MapLoader {
             prepareMappack(mappack, targetDir);
             success = true;
         }catch(Exception e){
-            logger.warn("Exception while loading lobby mappack", e);
+            logger.warn("Exception while preparing lobby mappack", e);
         }
         Map map = new Map(mappack, targetDir);
         if(success){
             this.registerMap(map);
             this.lobby = map;
-            this.loadMappackWorlds(map, mappack, "lobby");
-            return map;
+            try{
+                this.loadMappackWorlds(map, mappack, "lobby");
+                return map;
+            }catch(Exception e){
+                logger.fatal("Was not able to load the lobby mappack because of an error", e);
+                logger.fatal("Shutting down");
+                System.exit(1);
+                return null;
+            }
         }else{
-            logger.error("Was not able to load the lobby mappack. Shutting down");
+            logger.fatal("Was not able to load the lobby mappack. Shutting down");
             System.exit(1);
             return null;
         }
@@ -104,8 +111,12 @@ public class MapLoader {
                     public void run() {
                         Map map = new Map(mappack, dir);
                         registerMap(map);
-                        loadMappackWorlds(map, mappack, "map_" + id);
-                        future.set(map);
+                        try{
+                            loadMappackWorlds(map, mappack, "map_" + id);
+                            future.set(map);
+                        }catch(Exception e){
+                            future.setException(e);
+                        }
                     }
                 });
             }
@@ -122,6 +133,7 @@ public class MapLoader {
         //TODO: set trusted certificates
         HttpClient client = HttpClientBuilder.create().disableContentCompression().build();
         for(MappackFile file : mappack.getFiles()){
+            if(!file.isRequired()) continue;
             logger.info("Requesting " + file.getPath() + " (" + file.getFileId() + ")");
             HttpGet req = new HttpGet("https://pumpkin.jk-5.nl/api/file/" + file.getFileId());
             HttpResponse res = client.execute(req);
@@ -142,7 +154,7 @@ public class MapLoader {
         logger.info("Finished downloading");
     }
 
-    private void loadMappackWorlds(Map map, Mappack mappack, String saveDir){
+    private void loadMappackWorlds(Map map, Mappack mappack, String saveDir) throws Exception {
         for(final MappackWorld world : mappack.getWorlds()){
             WorldProvider provider = new WorldProvider() {
                 private int id;
@@ -169,10 +181,16 @@ public class MapLoader {
                     return world.getGenerator();
                 }
 
-                @Nonnull
                 @Override
                 public String getOptions() {
-                    return null;
+                    if(world.getGenerator().equals("flat")){
+                        if(world.getGeneratorOptions().isEmpty()){
+                            return null;
+                        }
+                        return world.getGeneratorOptions();
+                    }else{
+                        return null;
+                    }
                 }
             };
             map.addWorld(createWorld(provider, new WorldContext(saveDir, world.getName(), world)));

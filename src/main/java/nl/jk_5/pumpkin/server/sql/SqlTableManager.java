@@ -26,6 +26,7 @@ public class SqlTableManager {
     private static Dao<DatabaseMappackWorld, Integer> mappackWorldsDao;
     private static Dao<DatabaseMappackFile, Integer> mappackFilesDao;
     private static Dao<DatabaseMappackTeam, Integer> mappackTeamDao;
+    private static Dao<DatabaseGamerule, Integer> gameruleDao;
 
     public static void setupTables(){
         try{
@@ -40,6 +41,7 @@ public class SqlTableManager {
             mappackWorldsDao = createTable(DatabaseMappackWorld.class);
             mappackFilesDao = createTable(DatabaseMappackFile.class);
             mappackTeamDao = createTable(DatabaseMappackTeam.class);
+            gameruleDao = createTable(DatabaseGamerule.class);
 
         }catch(SQLException e){
             e.printStackTrace();
