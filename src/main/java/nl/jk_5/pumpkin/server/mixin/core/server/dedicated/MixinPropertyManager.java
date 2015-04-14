@@ -25,6 +25,10 @@ public class MixinPropertyManager extends PropertyManager {
             return "query.enabled";
         }else if(key.equals("enable-rcon")){
             return "rcon.enabled";
+        }else if(key.equals("server-ip")){
+            return "server.ip";
+        }else if(key.equals("server-port")){
+            return "server.port";
         }else{
             return key;
         }

@@ -12,7 +12,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.gui.IUpdatePlayerListBox;
 import net.minecraft.server.management.PlayerProfileCache;
-import net.minecraft.util.BlockPos;
 import net.minecraft.util.ReportedException;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.WorldType;
@@ -29,6 +28,7 @@ import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
 import nl.jk_5.pumpkin.server.multiworld.MapLoader;
+import nl.jk_5.pumpkin.server.util.Location;
 import nl.jk_5.pumpkin.server.util.ShutdownThread;
 
 import java.io.File;
@@ -63,6 +63,7 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
 
     @Overwrite
     protected void loadAllWorlds(String p_71247_1_, String p_71247_2_, long seed, WorldType type, String p_71247_6_) {
+        logger.info("Loading world files for lobby world");
         this.setUserMessage("menu.loadingLevel");
         Map map = MapLoader.instance().createLobby();
         MapWorld world = map.getPrimaryWorld();
@@ -71,12 +72,12 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
 
         //Normally, initialWorldChunkLoad would be called here to preload the spawn chunks
         //this.initialWorldChunkLoad();
-        //Because we do some modifications, i copied the entire method in this one, as this is the only place it's used
+        //Because we do some modifications, i copied the entire method into this one, as this is the only place it's used
 
         this.setUserMessage("menu.generatingTerrain");
         logger.info("Preloading spawn chunks for lobby world");
-        //TODO: maybe obtain spawnpoint from map configuration
-        BlockPos spawnPoint = worldServer.getSpawnPoint();
+
+        Location spawnPoint = world.getConfig().getSpawnpoint();
         long lastProgress = getCurrentTimeMillis();
 
         int chunksLoaded = 0;
@@ -84,15 +85,17 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
             for(int z = -192; z <= 192 && this.isServerRunning(); z += 16) {
                 long currentTime = getCurrentTimeMillis();
 
-                if(currentTime - lastProgress > 1000L) {
-                    this.outputPercentRemaining("Preparing spawn area", chunksLoaded * 100 / 625);
+                if(currentTime - lastProgress > 1000L){
+                    this.outputPercentRemaining("Preparing lobby spawn chunks", chunksLoaded * 100 / 625);
                     lastProgress = currentTime;
                 }
 
                 chunksLoaded ++;
-                worldServer.theChunkProviderServer.loadChunk(spawnPoint.getX() + x >> 4, spawnPoint.getZ() + z >> 4);
+                worldServer.theChunkProviderServer.loadChunk(spawnPoint.getBlockX() + x >> 4, spawnPoint.getBlockZ() + z >> 4);
             }
         }
+
+        logger.info("Lobby is ready to accept players. Opening socket");
 
         this.clearCurrentTask();
     }

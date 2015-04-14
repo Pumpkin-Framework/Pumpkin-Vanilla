@@ -70,7 +70,7 @@ public class MapLoader {
             prepareMappack(mappack, targetDir);
             success = true;
         }catch(Exception e){
-            logger.warn("Exception while preparing lobby mappack", e);
+            logger.warn("Exception while preparing files for lobby mappack", e);
         }
         Map map = new Map(mappack, targetDir);
         if(success){
