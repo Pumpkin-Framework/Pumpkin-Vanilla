@@ -13,7 +13,6 @@ import net.minecraft.util.EnumChatFormatting;
 import nl.jk_5.pumpkin.api.mappack.Mappack;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.Map;
-import nl.jk_5.pumpkin.server.multiworld.MapLoader;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 @NonnullByDefault
@@ -36,7 +35,7 @@ public class CommandMap extends BaseCommand {
                 component.getChatStyle().setColor(EnumChatFormatting.GREEN);
                 sender.addChatMessage(component);
 
-                final ListenableFuture<Map> future = MapLoader.instance().createMap(mappack);
+                final ListenableFuture<Map> future = Pumpkin.instance().getMapLoader().createMap(mappack);
                 future.addListener(new Runnable() {
                     @Override
                     public void run() {

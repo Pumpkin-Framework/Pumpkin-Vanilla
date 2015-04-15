@@ -10,9 +10,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
 
+import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
-import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ abstract class BaseCommand extends ComparedCommand {
             throw new CommandException("You are not in a world");
         }
         World world = sender.getEntityWorld();
-        return DimensionManagerImpl.instance().getWorld(world.provider.getDimensionId());
+        return Pumpkin.instance().getDimensionManager().getWorld(world.provider.getDimensionId());
     }
 
     protected static Map requireMap(ICommandSender sender) throws CommandException {

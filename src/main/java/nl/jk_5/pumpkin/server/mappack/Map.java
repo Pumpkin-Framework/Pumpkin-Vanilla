@@ -1,7 +1,7 @@
 package nl.jk_5.pumpkin.server.mappack;
 
 import nl.jk_5.pumpkin.api.mappack.Mappack;
-import nl.jk_5.pumpkin.server.multiworld.MapLoader;
+import nl.jk_5.pumpkin.server.Pumpkin;
 
 import java.io.File;
 import java.util.Collection;
@@ -25,11 +25,11 @@ public class Map {
     }
 
     public Collection<MapWorld> getWorlds(){
-        return MapLoader.instance().getWorlds(this);
+        return Pumpkin.instance().getMapLoader().getWorlds(this);
     }
 
     public void addWorld(MapWorld world) {
-        MapLoader.instance().addWorldToMap(world, this);
+        Pumpkin.instance().getMapLoader().addWorldToMap(world, this);
         if(world.getConfig().isDefault()){
             defaultWorld = world;
         }

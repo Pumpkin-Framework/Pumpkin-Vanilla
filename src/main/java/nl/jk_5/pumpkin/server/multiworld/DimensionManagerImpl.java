@@ -15,6 +15,7 @@ import net.minecraft.world.storage.WorldInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.jk_5.pumpkin.api.mappack.DimensionManager;
 import nl.jk_5.pumpkin.api.mappack.WorldContext;
 import nl.jk_5.pumpkin.api.mappack.WorldProvider;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
@@ -25,9 +26,8 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-public final class DimensionManagerImpl {
+public final class DimensionManagerImpl implements DimensionManager {
 
-    private static final DimensionManagerImpl INSTANCE = new DimensionManagerImpl();
     private static final Logger logger = LogManager.getLogger();
 
     private final TIntObjectMap<WorldProvider> customProviders = new TIntObjectHashMap<WorldProvider>();
@@ -41,17 +41,6 @@ public final class DimensionManagerImpl {
 
     public DimensionManagerImpl() {
         this.dimensionMap.set(1);
-    }
-
-    public void registerDimension(int id, WorldProvider provider) {
-        if(this.dimensions.contains(id)){
-            throw new IllegalArgumentException(String.format("Failed to register dimension for id %d, One is already registered", id));
-        }
-        customProviders.put(id, provider);
-        dimensions.add(id);
-        if(id >= 0){
-            dimensionMap.set(id);
-        }
     }
 
     public void unregisterDimension(int id) {
@@ -97,9 +86,19 @@ public final class DimensionManagerImpl {
         MinecraftServer.getServer().worldServers = builder.toArray(new WorldServer[builder.size()]);
     }
 
-    public void initWorld(int dimension, WorldContext ctx) {
-        if(!this.dimensions.contains(dimension) && !this.customProviders.containsKey(dimension)){
-            throw new IllegalArgumentException(String.format("Provider type for dimension %d does not exist!", dimension));
+    @Override
+    public MapWorld register(WorldProvider provider, WorldContext ctx) {
+        int id = getNextFreeDimensionId();
+        if(this.dimensions.contains(id)){
+            throw new IllegalArgumentException(String.format("Failed to register dimension for id %d, One is already registered", id));
+        }
+        customProviders.put(id, provider);
+        dimensions.add(id);
+        if(id >= 0){
+            dimensionMap.set(id);
+        }
+        if(!this.dimensions.contains(id) && !this.customProviders.containsKey(id)){
+            throw new IllegalArgumentException(String.format("Provider type for dimension %d does not exist!", id));
         }
         MinecraftServer mcserver = MinecraftServer.getServer();
         String name = ctx.getName() + "/" + ctx.getSubName();
@@ -109,13 +108,17 @@ public final class DimensionManagerImpl {
         WorldInfoHelper.apply(worldInfo, ctx.getConfig());
         logger.info(worldInfo.getNBTTagCompound().toString());
 
-        worldContext.put(dimension, ctx);
-        WorldServer world = new WorldServer(mcserver, saveHandler, worldInfo, dimension, mcserver.theProfiler);
+        worldContext.put(id, ctx);
+        WorldServer world = new WorldServer(mcserver, saveHandler, worldInfo, id, mcserver.theProfiler);
+        this.setWorld(id, world);
         world.init();
         world.addWorldAccess(new WorldManager(mcserver, world));
+
         //NailedEventFactory.fireWorldLoad(world);
+        return this.worlds.get(id);
     }
 
+    @Override
     public MapWorld getWorld(int dimension){
         return this.worlds.get(dimension);
     }
@@ -153,7 +156,7 @@ public final class DimensionManagerImpl {
         }
     }
 
-    public int getNextFreeDimensionId(){
+    private int getNextFreeDimensionId(){
         int next = 0;
         while(true){
             next = this.dimensionMap.nextClearBit(next);
@@ -163,9 +166,5 @@ public final class DimensionManagerImpl {
                 return next;
             }
         }
-    }
-
-    public static DimensionManagerImpl instance(){
-        return INSTANCE;
     }
 }

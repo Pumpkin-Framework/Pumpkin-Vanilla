@@ -24,10 +24,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
-import nl.jk_5.pumpkin.server.multiworld.MapLoader;
 import nl.jk_5.pumpkin.server.util.Location;
 import nl.jk_5.pumpkin.server.util.ShutdownThread;
 
@@ -65,7 +65,7 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
     protected void loadAllWorlds(String p_71247_1_, String p_71247_2_, long seed, WorldType type, String p_71247_6_) {
         logger.info("Loading world files for lobby world");
         this.setUserMessage("menu.loadingLevel");
-        Map map = MapLoader.instance().createLobby();
+        Map map = Pumpkin.instance().getMapLoader().createLobby();
         MapWorld world = map.getPrimaryWorld();
         WorldServer worldServer = world.getWrapped();
         this.getConfigurationManager().setPlayerManager(new WorldServer[]{worldServer});
@@ -80,13 +80,15 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
         Location spawnPoint = world.getConfig().getSpawnpoint();
         long lastProgress = getCurrentTimeMillis();
 
+        //Will load a radius of 12 chunks around the spawn chunk. This means it loads 625 chunks
+        final int radius = 12;
         int chunksLoaded = 0;
-        for(int x = -192; x <= 192 && this.isServerRunning(); x += 16) {
-            for(int z = -192; z <= 192 && this.isServerRunning(); z += 16) {
+        for(int x = -(radius * 16); x <= (radius * 16) && this.isServerRunning(); x += 16) {
+            for(int z = -(radius * 16); z <= (radius * 16) && this.isServerRunning(); z += 16) {
                 long currentTime = getCurrentTimeMillis();
 
                 if(currentTime - lastProgress > 1000L){
-                    this.outputPercentRemaining("Preparing lobby spawn chunks", chunksLoaded * 100 / 625);
+                    this.outputPercentRemaining("Preparing lobby spawn chunks", (chunksLoaded / 625) * 100);
                     lastProgress = currentTime;
                 }
 
@@ -104,7 +106,7 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
     public void unregisterAllWorlds(CallbackInfo info){
         if(!this.worldIsBeingDeleted) {
             for(WorldServer world : worldServers){
-                DimensionManagerImpl.instance().setWorld(world.provider.getDimensionId(), null);
+                ((DimensionManagerImpl) Pumpkin.instance().getDimensionManager()).setWorld(world.provider.getDimensionId(), null);
             }
         }
     }
@@ -125,13 +127,13 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
 
         this.theProfiler.endStartSection("levels");
 
-        int[] ids = DimensionManagerImpl.instance().getAllDimensionIds();
+        int[] ids = ((DimensionManagerImpl) Pumpkin.instance().getDimensionManager()).getAllDimensionIds();
         for (int x = 0; x < ids.length; x++){
             int id = ids[x];
             long i = System.nanoTime();
 
             if(id == 0 || this.getAllowNether()){ //TODO: always allow other worlds?
-                WorldServer worldserver = DimensionManagerImpl.instance().getWorld(id).getWrapped();
+                WorldServer worldserver = ((DimensionManagerImpl) Pumpkin.instance().getDimensionManager()).getWorld(id).getWrapped();
                 this.theProfiler.startSection(worldserver.getWorldInfo().getWorldName());
 
                 if(this.tickCounter % 20 == 0){
@@ -170,11 +172,11 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
                 this.theProfiler.endSection();
             }
 
-            DimensionManagerImpl.instance().worldTickTimes.get(id)[this.tickCounter % 100] = System.nanoTime() - i;
+            ((DimensionManagerImpl) Pumpkin.instance().getDimensionManager()).worldTickTimes.get(id)[this.tickCounter % 100] = System.nanoTime() - i;
         }
 
         this.theProfiler.endStartSection("pumpkin:dimensionUnloading");
-        DimensionManagerImpl.instance().unloadWorlds();
+        ((DimensionManagerImpl) Pumpkin.instance().getDimensionManager()).unloadWorlds();
         this.theProfiler.endStartSection("connection");
         this.getNetworkSystem().networkTick();
         this.theProfiler.endStartSection("players");
@@ -190,7 +192,7 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
 
     @Overwrite
     public WorldServer worldServerForDimension(int dimension) {
-        return DimensionManagerImpl.instance().getWorld(dimension).getWrapped();
+        return Pumpkin.instance().getDimensionManager().getWorld(dimension).getWrapped();
     }
 
     @Overwrite

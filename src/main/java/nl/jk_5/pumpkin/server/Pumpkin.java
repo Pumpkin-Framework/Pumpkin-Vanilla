@@ -6,7 +6,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.postgresql.Driver;
 
+import nl.jk_5.pumpkin.api.mappack.DimensionManager;
 import nl.jk_5.pumpkin.api.mappack.MappackRegistry;
+import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
 import nl.jk_5.pumpkin.server.multiworld.MapLoader;
 import nl.jk_5.pumpkin.server.sql.SqlMappackRegistry;
 import nl.jk_5.pumpkin.server.sql.SqlServiceImpl;
@@ -27,12 +29,14 @@ public class Pumpkin {
     private final MappackRegistry mappackRegistry = new SqlMappackRegistry();
     private final EventBus eventBus = new EventBus();
     private final ExecutorService executor = Executors.newCachedThreadPool();
+    private final MapLoader mapLoader = new MapLoader();
+    private final DimensionManagerImpl dimensionManager = new DimensionManagerImpl();
 
     private ServerConnection serverConnection;
     private SqlService sqlService = new SqlServiceImpl();
 
     public void load(){
-        eventBus.register(MapLoader.instance());
+        eventBus.register(this.mapLoader);
     }
 
     public void initialize(){
@@ -65,6 +69,14 @@ public class Pumpkin {
 
     public ExecutorService getExecutor() {
         return executor;
+    }
+
+    public MapLoader getMapLoader() {
+        return mapLoader;
+    }
+
+    public DimensionManager getDimensionManager() {
+        return dimensionManager;
     }
 
     public <T extends Event> T postEvent(T event){

@@ -36,7 +36,6 @@ import nl.jk_5.pumpkin.server.event.player.PlayerJoinServerEvent;
 import nl.jk_5.pumpkin.server.event.player.PlayerRespawnEvent;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.multiworld.DelegatingWorldProvider;
-import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
 import nl.jk_5.pumpkin.server.storage.PlayerNbtManager;
 import nl.jk_5.pumpkin.server.util.Location;
 
@@ -106,7 +105,7 @@ public abstract class MixinServerConfigurationManager {
         }
         profileCache.addEntry(profile); //Save the new name into the cache
 
-        MapWorld previousWorld = DimensionManagerImpl.instance().getWorld(player.dimension);
+        MapWorld previousWorld = Pumpkin.instance().getDimensionManager().getWorld(player.dimension);
 
         NBTTagCompound playerData = this.readPlayerDataFromFile(player);
 
@@ -204,7 +203,7 @@ public abstract class MixinServerConfigurationManager {
 
     @Overwrite
     public EntityPlayerMP recreatePlayerEntity(EntityPlayerMP player, int dimension, boolean conqueredEnd){
-        MapWorld oldWorld = DimensionManagerImpl.instance().getWorld(player.dimension);
+        MapWorld oldWorld = Pumpkin.instance().getDimensionManager().getWorld(player.dimension);
         player.getServerForPlayer().getEntityTracker().removePlayerFromTrackers(player); //Tell the clients to destroy the old entity
         player.getServerForPlayer().getEntityTracker().untrackEntity(player); //Untrack player
         player.getServerForPlayer().getPlayerManager().removePlayer(player); //Remove player from the chunk loaders

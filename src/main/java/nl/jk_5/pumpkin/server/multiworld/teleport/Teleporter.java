@@ -16,8 +16,8 @@ import net.minecraft.world.chunk.Chunk;
 import org.apache.commons.lang3.Validate;
 
 import nl.jk_5.pumpkin.api.mappack.Dimension;
+import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
-import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
 import nl.jk_5.pumpkin.server.util.Location;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
@@ -31,7 +31,7 @@ public class Teleporter {
         Validate.notNull(opt, "opt");
 
         TeleportOptions options = opt.copy(); //We don't want to accidently modify the options object passed in, so we copy it.
-        MapWorld currentWorld = DimensionManagerImpl.instance().getWorld(player.dimension);
+        MapWorld currentWorld = Pumpkin.instance().getDimensionManager().getWorld(player.dimension);
         /*if(!TeleportEventFactory.isTeleportAllowed(currentWorld, opt.getDestination().getWorld(), player, options)){
             return false;
         }*/

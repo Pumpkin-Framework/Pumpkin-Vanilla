@@ -1,7 +1,10 @@
 package nl.jk_5.pumpkin.api.mappack;
 
-import javax.annotation.Nonnull;
+import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
+import javax.annotation.Nullable;
+
+@NonnullByDefault
 public interface WorldProvider {
 
     int getId();
@@ -20,10 +23,11 @@ public interface WorldProvider {
      *
      * @return the world dimension
      */
-    @Nonnull
     Dimension getDimension();
 
     //TODO: Maybe an enum?
     String getType();
+
+    @Nullable
     String getOptions();
 }

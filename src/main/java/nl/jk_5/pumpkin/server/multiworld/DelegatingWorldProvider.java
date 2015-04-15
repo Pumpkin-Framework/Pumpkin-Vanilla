@@ -7,6 +7,7 @@ import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.*;
 
 import nl.jk_5.pumpkin.api.mappack.WorldProvider;
+import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.multiworld.gen.ChunkProviderVoid;
@@ -79,7 +80,7 @@ public class DelegatingWorldProvider extends net.minecraft.world.WorldProvider {
 
     public MapWorld getWorld(){
         if(this.world == null){
-            this.world = DimensionManagerImpl.instance().getWorld(this.dimId);
+            this.world = Pumpkin.instance().getDimensionManager().getWorld(this.dimId);
         }
         return this.world;
     }

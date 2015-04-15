@@ -8,9 +8,11 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
 
+@SuppressWarnings("UnusedDeclaration")
 public class PumpkinCommandManager extends CommandHandler implements IAdminCommand {
 
     //This method is used in MinecraftServerTransformer
+    @SuppressWarnings("UnusedDeclaration")
     public static PumpkinCommandManager create(){
         return new PumpkinCommandManager();
     }
@@ -88,34 +90,34 @@ public class PumpkinCommandManager extends CommandHandler implements IAdminComma
 
     public void notifyOperators(ICommandSender sender, ICommand command, int p_152372_3_, String msgFormat, Object ... msgParams){
         boolean sendFeedback = true;
-        MinecraftServer minecraftserver = MinecraftServer.getServer();
+        MinecraftServer server = MinecraftServer.getServer();
 
         if(!sender.sendCommandFeedback()){
             sendFeedback = false;
         }
 
-        ChatComponentTranslation chatcomponenttranslation = new ChatComponentTranslation("chat.type.admin", sender.getCommandSenderName(), new ChatComponentTranslation(msgFormat, msgParams));
-        chatcomponenttranslation.getChatStyle().setColor(EnumChatFormatting.GRAY);
-        chatcomponenttranslation.getChatStyle().setItalic(true);
+        ChatComponentTranslation message = new ChatComponentTranslation("chat.type.admin", sender.getCommandSenderName(), new ChatComponentTranslation(msgFormat, msgParams));
+        message.getChatStyle().setColor(EnumChatFormatting.GRAY);
+        message.getChatStyle().setItalic(true);
 
         if(sendFeedback){
-            for (Object player : minecraftserver.getConfigurationManager().playerEntityList) {
-                EntityPlayer entityplayer = (EntityPlayer) player;
+            for(Object playerObj : server.getConfigurationManager().playerEntityList){
+                EntityPlayer player = (EntityPlayer) playerObj;
 
-                if (entityplayer != sender && minecraftserver.getConfigurationManager().canSendCommands(entityplayer.getGameProfile()) && command.canCommandSenderUseCommand(sender)) {
-                    entityplayer.addChatMessage(chatcomponenttranslation);
+                if(player != sender && server.getConfigurationManager().canSendCommands(player.getGameProfile()) && command.canCommandSenderUseCommand(sender)){
+                    player.addChatMessage(message);
                 }
             }
         }
 
-        if(sender != minecraftserver && minecraftserver.worldServers[0].getGameRules().getGameRuleBooleanValue("logAdminCommands")){
-            minecraftserver.addChatMessage(chatcomponenttranslation);
+        if(sender != server && sender.getEntityWorld().getGameRules().getGameRuleBooleanValue("logAdminCommands")){
+            server.addChatMessage(message);
         }
 
-        boolean flag1 = minecraftserver.worldServers[0].getGameRules().getGameRuleBooleanValue("sendCommandFeedback");
+        boolean flag1 = sender.getEntityWorld().getGameRules().getGameRuleBooleanValue("sendCommandFeedback");
 
         if(sender instanceof CommandBlockLogic){
-            flag1 = ((CommandBlockLogic)sender).shouldTrackOutput();
+            flag1 = ((CommandBlockLogic) sender).shouldTrackOutput();
         }
 
         if((p_152372_3_ & 1) != 1 && flag1){

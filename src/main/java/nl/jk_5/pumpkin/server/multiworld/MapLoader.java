@@ -30,7 +30,6 @@ import javax.annotation.Nonnull;
 
 public class MapLoader {
 
-    private static final MapLoader INSTANCE = new MapLoader();
     private static final Logger logger = LogManager.getLogger();
     private static final File mapsDir;
 
@@ -155,53 +154,19 @@ public class MapLoader {
     }
 
     private void loadMappackWorlds(Map map, Mappack mappack, String saveDir) throws Exception {
-        for(final MappackWorld world : mappack.getWorlds()){
-            WorldProvider provider = new WorldProvider() {
-                private int id;
+        for(final MappackWorld config : mappack.getWorlds()){
+            //TODO: enum for world type and add that to the builder
+            //TODO:
+            /*WorldBuilder builder = WorldBuilder.create();
+            builder.setSaveDir(saveDir + "/" + world.getName());
+            builder.setConfig(world);
+            builder.setProvider(new MappackWorldProvider(world));
+            map.addWorld(createWorld(builder));*/
 
-                @Override
-                public int getId() {
-                    return id;
-                }
-
-                @Override
-                public void setId(int id) {
-                    this.id = id;
-                }
-
-                @Nonnull
-                @Override
-                public Dimension getDimension() {
-                    return world.getDimension();
-                }
-
-                @Nonnull
-                @Override
-                public String getType() {
-                    return world.getGenerator();
-                }
-
-                @Override
-                public String getOptions() {
-                    if(world.getGenerator().equals("flat")){
-                        if(world.getGeneratorOptions().isEmpty()){
-                            return null;
-                        }
-                        return world.getGeneratorOptions();
-                    }else{
-                        return null;
-                    }
-                }
-            };
-            map.addWorld(createWorld(provider, new WorldContext(saveDir, world.getName(), world)));
+            DimensionManager dimensionManager = Pumpkin.instance().getDimensionManager();
+            MapWorld world = dimensionManager.register(new MappackWorldProvider(config), new WorldContext(saveDir, config.getName(), config));
+            map.addWorld(world);
         }
-    }
-
-    private MapWorld createWorld(WorldProvider provider, WorldContext ctx){
-        int id = DimensionManagerImpl.instance().getNextFreeDimensionId();
-        DimensionManagerImpl.instance().registerDimension(id, provider); //TODO: provider
-        DimensionManagerImpl.instance().initWorld(id, ctx);
-        return DimensionManagerImpl.instance().getWorld(id);
     }
 
     public void addWorldToMap(MapWorld world, Map map){
@@ -212,9 +177,5 @@ public class MapLoader {
 
     public Collection<MapWorld> getWorlds(Map map){
         return this.mapWorlds.get(map);
-    }
-
-    public static MapLoader instance(){
-        return INSTANCE;
     }
 }

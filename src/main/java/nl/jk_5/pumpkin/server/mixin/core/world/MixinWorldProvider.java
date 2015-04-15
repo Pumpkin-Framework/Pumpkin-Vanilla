@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
+import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mixin.interfaces.IWorldProvider;
 import nl.jk_5.pumpkin.server.multiworld.DelegatingWorldProvider;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
@@ -24,6 +25,6 @@ public abstract class MixinWorldProvider implements IWorldProvider {
 
     @Overwrite
     public static WorldProvider getProviderForDimension(int dimensionId){
-        return DimensionManagerImpl.instance().createProviderFor(dimensionId);
+        return ((DimensionManagerImpl) Pumpkin.instance().getDimensionManager()).createProviderFor(dimensionId);
     }
 }
