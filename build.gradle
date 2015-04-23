@@ -25,8 +25,10 @@ buildscript {
 }
 
 apply plugin: 'net.minecrell.vanilla'
-apply plugin: 'license'
-apply plugin: 'checkstyle'
+//apply plugin: 'license'
+//apply plugin: 'checkstyle'
+
+ext.minecraftPlugin = plugins.getPlugin('net.minecrell.vanilla')
 
 minecraft {
     version = '1.8'
@@ -61,4 +63,43 @@ dependencies {
     compile 'org.javassist:javassist:3.19.0-GA'
     compile 'com.j256.ormlite:ormlite-jdbc:4.48'
     compile 'jk_5.eventbus:EventBus:2.0.1'
+}
+
+ext {
+    mixinSrg = new File(project.buildDir, 'tmp/mixins/mixins.srg')
+    mixinRefMap = new File(project.buildDir, "tmp/mixins/mixins.pumpkin.refmap.json")
+}
+
+task copySrgs(type: Copy, dependsOn: 'genSrgs') {
+    from minecraftPlugin.delayedFile('{SRG_DIR}')
+
+    include '**/*.srg'
+    into 'build/srgs'
+}
+
+setupDecompWorkspace.dependsOn copySrgs
+setupDevWorkspace.dependsOn copySrgs
+compileJava.dependsOn copySrgs
+
+jar {
+    from project.mixinRefMap
+}
+
+reobf.doFirst {
+    if (project.mixinSrg.exists()) {
+        addExtraSrgFile project.mixinSrg
+    }
+}
+
+compileJava {
+    options.compilerArgs += [
+            '-Xlint:-processing',
+            "-AoutSrgFile=${project.mixinSrg.canonicalPath}",
+            "-AoutRefMapFile=${project.mixinRefMap.canonicalPath}",
+            "-AreobfSrgFile=${project.file('build/srgs/mcp-srg.srg').canonicalPath}"
+    ]
+}
+
+processResources {
+    rename("log4j2_prod.xml", "log4j2.xml")
 }
