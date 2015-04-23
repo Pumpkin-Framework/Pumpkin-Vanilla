@@ -10,11 +10,13 @@ import nl.jk_5.pumpkin.api.mappack.DimensionManager;
 import nl.jk_5.pumpkin.api.mappack.MappackRegistry;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
 import nl.jk_5.pumpkin.server.multiworld.MapLoader;
+import nl.jk_5.pumpkin.server.player.PlayerManager;
 import nl.jk_5.pumpkin.server.sql.SqlMappackRegistry;
 import nl.jk_5.pumpkin.server.sql.SqlServiceImpl;
 import nl.jk_5.pumpkin.server.sql.SqlTableManager;
 import nl.jk_5.pumpkin.server.util.interfaces.SqlService;
 import nl.jk_5.pumpkin.server.web.ServerConnection;
+import nl.jk_5.pumpkin.server.web.WebEventHandler;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -31,12 +33,15 @@ public class Pumpkin {
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final MapLoader mapLoader = new MapLoader();
     private final DimensionManagerImpl dimensionManager = new DimensionManagerImpl();
+    private final PlayerManager playerManager = new PlayerManager();
 
     private ServerConnection serverConnection;
     private SqlService sqlService = new SqlServiceImpl();
 
     public void load(){
         eventBus.register(this.mapLoader);
+        eventBus.register(this.playerManager);
+        eventBus.register(WebEventHandler.instance());
     }
 
     public void initialize(){
@@ -47,6 +52,7 @@ public class Pumpkin {
         }
 
         serverConnection = new ServerConnection();
+        serverConnection.connect();
 
         SqlTableManager.setupTables();
     }
@@ -77,6 +83,10 @@ public class Pumpkin {
 
     public DimensionManager getDimensionManager() {
         return dimensionManager;
+    }
+
+    public PlayerManager getPlayerManager() {
+        return playerManager;
     }
 
     public <T extends Event> T postEvent(T event){

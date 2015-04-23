@@ -28,7 +28,7 @@ public class PlayerJoinServerEvent extends PlayerEvent {
         private Location spawnPoint;
         @Nullable private Location location;
 
-        public Pre(EntityPlayerMP player, SocketAddress address, IChatComponent joinMessage, Location spawnPoint, Location location) {
+        public Pre(EntityPlayerMP player, SocketAddress address, IChatComponent joinMessage, Location spawnPoint, @Nullable Location location) {
             super(player);
             this.address = (InetSocketAddress) address;
             this.joinMessage = joinMessage;

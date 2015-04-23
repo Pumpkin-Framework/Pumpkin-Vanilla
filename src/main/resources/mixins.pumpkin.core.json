@@ -4,6 +4,7 @@
   "refmap": "mixins.pumpkin.refmap.json",
   "server": [
     "entity.player.MixinEntityPlayer",
+    "network.MixinNetHandlerPlayServer",
     "server.MixinMinecraftServer",
     "server.dedicated.MixinDedicatedServer",
     "server.dedicated.MixinPropertyManager",

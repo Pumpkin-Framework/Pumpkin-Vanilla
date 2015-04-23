@@ -45,9 +45,92 @@ public final class DimensionManagerImpl implements DimensionManager {
 
     public void unregisterDimension(int id) {
         if (!dimensions.contains(id)) {
-            throw new IllegalArgumentException(String.format("Failed to unregister dimension for id %d; No provider registered", id));
+            throw new IllegalArgumentException("Failed to unregister dimension for id " + id + ". No provider registered");
         }
         dimensions.remove(id);
+    }
+
+    @Override
+    public MapWorld register(WorldProvider provider, WorldContext ctx) {
+        int id = getNextFreeDimensionId();
+        if(this.dimensions.contains(id)){
+            throw new IllegalArgumentException("Failed to register dimension for id " + id + ". One is already registered");
+        }
+        customProviders.put(id, provider);
+        dimensions.add(id);
+        if(id >= 0){
+            dimensionMap.set(id);
+        }
+        if(!this.dimensions.contains(id) && !this.customProviders.containsKey(id)){
+            throw new IllegalArgumentException("Provider type for dimension " + id + " does not exist!");
+        }
+        MinecraftServer mcserver = MinecraftServer.getServer();
+        String name = ctx.getName() + "/" + ctx.getSubName();
+        ISaveHandler saveHandler = mcserver.getActiveAnvilConverter().getSaveLoader(name, true);
+
+        WorldInfo worldInfo = new WorldInfo();
+        WorldInfoHelper.apply(worldInfo, ctx.getConfig());
+        logger.info(worldInfo.getNBTTagCompound().toString());
+
+        worldContext.put(id, ctx);
+        WorldServer world = new WorldServer(mcserver, saveHandler, worldInfo, id, mcserver.theProfiler);
+        this.setWorld(id, world);
+        world.init();
+        world.addWorldAccess(new WorldManager(mcserver, world));
+
+        //NailedEventFactory.fireWorldLoad(world);
+        return this.worlds.get(id);
+    }
+
+    @Override
+    public MapWorld getWorld(int dimension){
+        return this.worlds.get(dimension);
+    }
+
+    public void unloadWorld(int id){
+        this.unloadQueue.add(id);
+    }
+
+    //Private api
+    public net.minecraft.world.WorldProvider createProviderFor(int dim){
+        if(!this.customProviders.containsKey(dim)){
+            throw new RuntimeException("No WorldProvider bound for dimension " + dim);
+        }
+        DelegatingWorldProvider d = new DelegatingWorldProvider(this.customProviders.get(dim));
+        ((IWorldProvider) d).setDimensionId(dim);
+        return d;
+    }
+
+    public void unloadWorlds(){
+        TIntIterator it = this.unloadQueue.iterator();
+        while(it.hasNext()){
+            int id = it.next();
+            if(worlds.containsKey(id)){
+                WorldServer w = worlds.get(id).getWrapped();
+                try{
+                    w.saveAllChunks(true, null);
+                }catch(MinecraftException e){
+                    logger.warn("Error while unloading world " + id, e);
+                }finally{
+                    //NailedEventFactory.fireWorldUnload(w);
+                    w.flush();
+                    setWorld(id, null);
+                }
+                it.remove();
+            }
+        }
+    }
+
+    private int getNextFreeDimensionId(){
+        int next = 0;
+        while(true){
+            next = this.dimensionMap.nextClearBit(next);
+            if(dimensions.contains(next)){
+                dimensionMap.set(next);
+            }else{
+                return next;
+            }
+        }
     }
 
     public boolean isDimensionRegistered(int dim) {
@@ -84,87 +167,5 @@ public final class DimensionManagerImpl implements DimensionManager {
             }
         });
         MinecraftServer.getServer().worldServers = builder.toArray(new WorldServer[builder.size()]);
-    }
-
-    @Override
-    public MapWorld register(WorldProvider provider, WorldContext ctx) {
-        int id = getNextFreeDimensionId();
-        if(this.dimensions.contains(id)){
-            throw new IllegalArgumentException(String.format("Failed to register dimension for id %d, One is already registered", id));
-        }
-        customProviders.put(id, provider);
-        dimensions.add(id);
-        if(id >= 0){
-            dimensionMap.set(id);
-        }
-        if(!this.dimensions.contains(id) && !this.customProviders.containsKey(id)){
-            throw new IllegalArgumentException(String.format("Provider type for dimension %d does not exist!", id));
-        }
-        MinecraftServer mcserver = MinecraftServer.getServer();
-        String name = ctx.getName() + "/" + ctx.getSubName();
-        ISaveHandler saveHandler = mcserver.getActiveAnvilConverter().getSaveLoader(name, true);
-
-        WorldInfo worldInfo = new WorldInfo();
-        WorldInfoHelper.apply(worldInfo, ctx.getConfig());
-        logger.info(worldInfo.getNBTTagCompound().toString());
-
-        worldContext.put(id, ctx);
-        WorldServer world = new WorldServer(mcserver, saveHandler, worldInfo, id, mcserver.theProfiler);
-        this.setWorld(id, world);
-        world.init();
-        world.addWorldAccess(new WorldManager(mcserver, world));
-
-        //NailedEventFactory.fireWorldLoad(world);
-        return this.worlds.get(id);
-    }
-
-    @Override
-    public MapWorld getWorld(int dimension){
-        return this.worlds.get(dimension);
-    }
-
-    public net.minecraft.world.WorldProvider createProviderFor(int dim){
-        if(!this.customProviders.containsKey(dim)){
-            throw new RuntimeException(String.format("No WorldProvider bound for dimension %d", dim));
-        }
-        DelegatingWorldProvider d = new DelegatingWorldProvider(this.customProviders.get(dim));
-        ((IWorldProvider) d).setDimensionId(dim);
-        return d;
-    }
-
-    public void unloadWorld(int id){
-        this.unloadQueue.add(id);
-    }
-
-    public void unloadWorlds(){
-        TIntIterator it = this.unloadQueue.iterator();
-        while(it.hasNext()){
-            int id = it.next();
-            if(worlds.containsKey(id)){
-                WorldServer w = worlds.get(id).getWrapped();
-                try{
-                    w.saveAllChunks(true, null);
-                }catch(MinecraftException e){
-                    logger.warn("Error while unloading world " + id, e);
-                }finally{
-                    //NailedEventFactory.fireWorldUnload(w);
-                    w.flush();
-                    setWorld(id, null);
-                }
-                it.remove();
-            }
-        }
-    }
-
-    private int getNextFreeDimensionId(){
-        int next = 0;
-        while(true){
-            next = this.dimensionMap.nextClearBit(next);
-            if(dimensions.contains(next)){
-                dimensionMap.set(next);
-            }else{
-                return next;
-            }
-        }
     }
 }
