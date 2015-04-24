@@ -12,6 +12,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.gui.IUpdatePlayerListBox;
 import net.minecraft.server.management.PlayerProfileCache;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.util.ReportedException;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.WorldType;
@@ -28,11 +30,13 @@ import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
+import nl.jk_5.pumpkin.server.util.ConsoleFormatter;
 import nl.jk_5.pumpkin.server.util.Location;
 import nl.jk_5.pumpkin.server.util.ShutdownThread;
 
 import java.io.File;
 import java.net.Proxy;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.FutureTask;
 
@@ -204,6 +208,21 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
         server.startServerThread();
 
         Runtime.getRuntime().addShutdownHook(new ShutdownThread(server));
+    }
+
+    @Override @Overwrite
+    public void addChatMessage(IChatComponent component) {
+        StringBuilder builder = new StringBuilder();
+        Iterator<IChatComponent> it = ((Iterator<IChatComponent>) component.iterator());
+
+        while(it.hasNext()){
+            IChatComponent child = it.next();
+            builder.append(child.getChatStyle().getFormattingCode());
+            builder.append(child.getUnformattedTextForChat());
+            builder.append(EnumChatFormatting.RESET);
+        }
+
+        logger.info(ConsoleFormatter.format(builder.toString()));
     }
 
     @Overwrite

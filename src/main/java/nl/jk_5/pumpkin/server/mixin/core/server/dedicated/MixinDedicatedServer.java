@@ -14,9 +14,11 @@ import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import nl.jk_5.pumpkin.server.Pumpkin;
-import nl.jk_5.pumpkin.server.util.ConsoleInputThread;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,13 +39,8 @@ public abstract class MixinDedicatedServer extends MinecraftServer {
     @Shadow private RConThreadMain theRConThreadMain;
     @Shadow public abstract long getMaxTickTime();
 
-    protected boolean startServer() throws IOException {
-        Thread thread = new ConsoleInputThread();
-        thread.setDaemon(true);
-        thread.start();
-
-        logger.info("Starting minecraft server version 1.8");
-
+    @Inject(method = "startServer", at = @At(value = "INVOKE", target = "Ljava/lang/Runtime;getRuntime()Ljava/lang/Runtime;", shift = At.Shift.BEFORE), cancellable = true)
+    protected void onStartServer(CallbackInfoReturnable<Boolean> cb) throws IOException {
         if(Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L){
             logger.warn("To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar minecraft_server.jar\"");
         }
@@ -57,7 +54,8 @@ public abstract class MixinDedicatedServer extends MinecraftServer {
         if(!this.eula.hasAcceptedEULA()) {
             logger.info("You need to agree to the EULA in order to run the server. Go to eula.txt for more info.");
             this.eula.createEULAFile();
-            return false;
+
+            cb.setReturnValue(false);
         }else{
             if(this.isSinglePlayer()){
                 this.setHostname("127.0.0.1");
@@ -100,7 +98,8 @@ public abstract class MixinDedicatedServer extends MinecraftServer {
                 logger.warn("**** FAILED TO BIND TO PORT!");
                 logger.warn("The exception was: {}", ioexception.toString());
                 logger.warn("Perhaps a server is already running on that port?");
-                return false;
+                cb.setReturnValue(false);
+                return;
             }
 
             if(!this.isServerInOnlineMode()){
@@ -110,12 +109,12 @@ public abstract class MixinDedicatedServer extends MinecraftServer {
                 logger.warn("To change this, set \"online-mode\" to \"true\" in the server.properties file.");
             }
 
-            /*if(this.convertFiles()){
-                this.getPlayerProfileCache().save();
-            }*/
+            ///if(this.convertFiles()){
+            ///    this.getPlayerProfileCache().save();
+            ///}
 
             if(!PreYggdrasilConverter.tryConvert(this.settings)){
-                return false;
+                cb.setReturnValue(false);
             }else{
                 Pumpkin.instance().initialize();
 
@@ -131,6 +130,8 @@ public abstract class MixinDedicatedServer extends MinecraftServer {
                 long endTime = System.nanoTime() - startTime;
                 String timeDiff = String.format("%.3fs", (double) endTime / 1E9);
                 logger.info("Done (" + timeDiff + ")! For help, type \"help\" or \"?\"");
+
+                Pumpkin.instance().consoleInitLatch.countDown();
 
                 if(this.settings.getBooleanProperty("enable-query", false)){
                     logger.info("Starting GS4 status listener");
@@ -151,7 +152,7 @@ public abstract class MixinDedicatedServer extends MinecraftServer {
                     watchdog.start();
                 }
 
-                return true;
+                cb.setReturnValue(true);
             }
         }
     }

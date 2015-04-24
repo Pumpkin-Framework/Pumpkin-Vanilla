@@ -3,9 +3,11 @@
   "package": "nl.jk_5.pumpkin.server.mixin.core",
   "refmap": "mixins.pumpkin.refmap.json",
   "server": [
+    "MixinBootstrap",
     "entity.player.MixinEntityPlayer",
     "network.MixinNetHandlerPlayServer",
     "server.MixinMinecraftServer",
+    "server.dedicated.MixinConsoleHandler",
     "server.dedicated.MixinDedicatedServer",
     "server.dedicated.MixinPropertyManager",
     "server.dedicated.MixinDedicatedPlayerList",

@@ -2,6 +2,8 @@ package nl.jk_5.pumpkin.launch;
 
 import net.minecraft.launchwrapper.Launch;
 
+import nl.jk_5.pumpkin.launch.console.VanillaConsole;
+
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.channels.Channels;
@@ -33,6 +35,7 @@ public final class Main {
             return;
         }
 
+        VanillaConsole.start();
         Launch.main(join(args,
                 "--tweakClass", "nl.jk_5.pumpkin.launch.ServerTweaker"
         ));

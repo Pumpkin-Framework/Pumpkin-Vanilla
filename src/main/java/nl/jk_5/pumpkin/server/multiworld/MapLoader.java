@@ -66,7 +66,7 @@ public class MapLoader {
         targetDir.mkdir();
         boolean success = false;
         try{
-            prepareMappack(mappack, targetDir);
+            //prepareMappack(mappack, targetDir); //TODO
             success = true;
         }catch(Exception e){
             logger.warn("Exception while preparing files for lobby mappack", e);

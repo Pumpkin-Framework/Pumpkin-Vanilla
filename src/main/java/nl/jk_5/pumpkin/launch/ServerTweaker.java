@@ -8,6 +8,8 @@ import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 
+import nl.jk_5.pumpkin.launch.console.VanillaConsole;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -29,7 +31,7 @@ public class ServerTweaker implements ITweaker {
 
     @Override
     public void acceptOptions(List<String> list, File file, File file1, String s) {
-
+        VanillaConsole.start();
     }
 
     @Override
@@ -43,6 +45,9 @@ public class ServerTweaker implements ITweaker {
         loader.addClassLoaderExclusion("org.spongepowered.tools.");
         loader.addClassLoaderExclusion("nl.jk_5.pumpkin.server.mixin.");
         loader.addClassLoaderExclusion("nl.jk_5.pumpkin.launch.");
+        loader.addClassLoaderExclusion("jline.");
+        loader.addClassLoaderExclusion("org.fusesource.");
+        loader.addClassLoaderExclusion("nl.jk_5.pumpkin.launch.console.");
 
         loader.registerTransformer("nl.jk_5.pumpkin.launch.transformer.MinecraftServerTransformer");
         loader.registerTransformer("nl.jk_5.pumpkin.launch.transformer.EventSubscriptionTransformer");
