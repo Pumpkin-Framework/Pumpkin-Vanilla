@@ -2,9 +2,13 @@ package nl.jk_5.pumpkin.api.mappack;
 
 import net.minecraft.world.WorldSettings;
 
-import nl.jk_5.pumpkin.server.util.Location;
+import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
+import nl.jk_5.pumpkin.server.util.location.Location;
 
+@NonnullByDefault
 public interface MappackWorld {
+
+    int getId();
 
     Mappack getMappack();
 

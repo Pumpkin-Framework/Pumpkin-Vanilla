@@ -1,12 +1,14 @@
 package nl.jk_5.pumpkin.server.sql.obj;
 
+import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import net.minecraft.world.WorldSettings;
 
 import nl.jk_5.pumpkin.api.mappack.Dimension;
 import nl.jk_5.pumpkin.api.mappack.MappackWorld;
-import nl.jk_5.pumpkin.server.util.Location;
+import nl.jk_5.pumpkin.server.util.location.Location;
 
 @DatabaseTable(tableName = "mappack_world")
 public class DatabaseMappackWorld implements MappackWorld {
@@ -58,6 +60,9 @@ public class DatabaseMappackWorld implements MappackWorld {
 
     @DatabaseField(columnName = "flat_generator_settings", canBeNull = true, width = 256)
     private String generatorOptions;
+
+    @ForeignCollectionField
+    private ForeignCollection<DatabaseZone> zones;
 
     public DatabaseMappackWorld() {
     }
@@ -124,5 +129,9 @@ public class DatabaseMappackWorld implements MappackWorld {
     @Override
     public String getGeneratorOptions() {
         return generatorOptions;
+    }
+
+    public ForeignCollection<DatabaseZone> getZones() {
+        return zones;
     }
 }

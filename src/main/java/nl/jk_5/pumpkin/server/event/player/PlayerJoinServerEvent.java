@@ -1,12 +1,12 @@
 package nl.jk_5.pumpkin.server.event.player;
 
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 import org.apache.commons.lang3.Validate;
 
-import nl.jk_5.pumpkin.server.util.Location;
+import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
+import nl.jk_5.pumpkin.server.util.location.Location;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -15,7 +15,7 @@ import javax.annotation.Nullable;
 @NonnullByDefault
 public class PlayerJoinServerEvent extends PlayerEvent {
 
-    protected PlayerJoinServerEvent(EntityPlayerMP player) {
+    private PlayerJoinServerEvent(Player player) {
         super(player);
     }
 
@@ -28,7 +28,7 @@ public class PlayerJoinServerEvent extends PlayerEvent {
         private Location spawnPoint;
         @Nullable private Location location;
 
-        public Pre(EntityPlayerMP player, SocketAddress address, IChatComponent joinMessage, Location spawnPoint, @Nullable Location location) {
+        public Pre(Player player, SocketAddress address, IChatComponent joinMessage, Location spawnPoint, @Nullable Location location) {
             super(player);
             this.address = (InetSocketAddress) address;
             this.joinMessage = joinMessage;
@@ -84,7 +84,7 @@ public class PlayerJoinServerEvent extends PlayerEvent {
     @NonnullByDefault
     public static class Post extends PlayerJoinServerEvent {
 
-        public Post(EntityPlayerMP player) {
+        public Post(Player player) {
             super(player);
         }
     }

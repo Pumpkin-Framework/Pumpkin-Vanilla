@@ -1,6 +1,6 @@
 package nl.jk_5.pumpkin.server.multiworld.teleport;
 
-import nl.jk_5.pumpkin.server.util.Location;
+import nl.jk_5.pumpkin.server.util.location.Location;
 
 public final class TeleportOptions {
 

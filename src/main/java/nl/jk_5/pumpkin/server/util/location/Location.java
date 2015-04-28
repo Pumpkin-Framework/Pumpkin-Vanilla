@@ -1,10 +1,11 @@
-package nl.jk_5.pumpkin.server.util;
+package nl.jk_5.pumpkin.server.util.location;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.BlockPos;
 
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
+import nl.jk_5.pumpkin.server.util.MathUtil;
 
 import javax.annotation.Nonnull;
 

@@ -13,16 +13,20 @@ import net.minecraft.world.World;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
+import nl.jk_5.pumpkin.server.permissions.PermissionCommand;
+import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+@SuppressWarnings("unused")
 @NonnullByDefault
-abstract class BaseCommand extends ComparedCommand {
+abstract class BaseCommand extends ComparedCommand implements PermissionCommand {
 
     private final String name;
     private final String[] aliases;
@@ -51,9 +55,13 @@ abstract class BaseCommand extends ComparedCommand {
         return map;
     }
 
-    protected static EntityPlayerMP requirePlayer(ICommandSender sender) throws CommandException {
+    protected static Player requirePlayer(ICommandSender sender) throws CommandException {
         if(sender instanceof EntityPlayerMP){
-            return ((EntityPlayerMP) sender);
+            Player player = Pumpkin.instance().getPlayerManager().getFromEntity((EntityPlayerMP) sender);
+            if(player == null){
+                throw new CommandException("You are not a player");
+            }
+            return player;
         }else{
             throw new CommandException("You are not a player");
         }
@@ -119,7 +127,7 @@ abstract class BaseCommand extends ComparedCommand {
     }
 
     protected static <T extends Entity> List<T> select(ICommandSender sender, String query, Class<? extends T> target) throws CommandException {
-        //noinspection unchecked
+        @SuppressWarnings("unchecked")
         List<T> out = PlayerSelector.matchEntities(sender, query, target);
         if(out == null || out.isEmpty()){
             return Collections.emptyList();
@@ -206,6 +214,17 @@ abstract class BaseCommand extends ComparedCommand {
 
     @Override
     public final boolean isUsernameIndex(String[] args, int index) {
+        return false;
+    }
+
+    @Nonnull
+    @Override
+    public String getPermission() {
+        return "pumpkin.command." + this.name;
+    }
+
+    @Override
+    public boolean defaultPermission() {
         return false;
     }
 

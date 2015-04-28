@@ -31,8 +31,8 @@ import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
 import nl.jk_5.pumpkin.server.util.ConsoleFormatter;
-import nl.jk_5.pumpkin.server.util.Location;
 import nl.jk_5.pumpkin.server.util.ShutdownThread;
+import nl.jk_5.pumpkin.server.util.location.Location;
 
 import java.io.File;
 import java.net.Proxy;
@@ -48,6 +48,7 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
     @Shadow private boolean worldIsBeingDeleted;
     @Shadow private WorldServer[] worldServers;
     @Shadow private int tickCounter;
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     @Shadow private List<IUpdatePlayerListBox> playersOnline;
     @Shadow private long[][] timeOfLastDimensionTick;
     @Shadow private Proxy serverProxy;
@@ -132,12 +133,13 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
         this.theProfiler.endStartSection("levels");
 
         int[] ids = ((DimensionManagerImpl) Pumpkin.instance().getDimensionManager()).getAllDimensionIds();
+        //noinspection ForLoopReplaceableByForEach
         for (int x = 0; x < ids.length; x++){
             int id = ids[x];
             long i = System.nanoTime();
 
             if(id == 0 || this.getAllowNether()){ //TODO: always allow other worlds?
-                WorldServer worldserver = ((DimensionManagerImpl) Pumpkin.instance().getDimensionManager()).getWorld(id).getWrapped();
+                WorldServer worldserver = Pumpkin.instance().getDimensionManager().getWorld(id).getWrapped();
                 this.theProfiler.startSection(worldserver.getWorldInfo().getWorldName());
 
                 if(this.tickCounter % 20 == 0){
@@ -187,6 +189,7 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
         this.getConfigurationManager().onTick();
         this.theProfiler.endStartSection("tickables");
 
+        //noinspection ForLoopReplaceableByForEach
         for(int j = 0; j < this.playersOnline.size(); ++j){
             this.playersOnline.get(j).update();
         }
@@ -213,6 +216,8 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
     @Override @Overwrite
     public void addChatMessage(IChatComponent component) {
         StringBuilder builder = new StringBuilder();
+
+        @SuppressWarnings("unchecked")
         Iterator<IChatComponent> it = ((Iterator<IChatComponent>) component.iterator());
 
         while(it.hasNext()){

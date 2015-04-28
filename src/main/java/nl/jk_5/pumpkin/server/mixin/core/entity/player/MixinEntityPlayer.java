@@ -8,9 +8,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import nl.jk_5.pumpkin.server.Pumpkin;
-import nl.jk_5.pumpkin.server.util.Location;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 import nl.jk_5.pumpkin.server.util.interfaces.PlayerEntity;
+import nl.jk_5.pumpkin.server.util.location.Location;
 
 @Mixin(EntityPlayer.class)
 @NonnullByDefault

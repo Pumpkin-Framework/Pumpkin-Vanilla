@@ -1,29 +1,37 @@
 package nl.jk_5.pumpkin.server;
 
-import jk_5.eventbus.Event;
-import jk_5.eventbus.EventBus;
+import com.mojang.authlib.GameProfile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.postgresql.Driver;
 
+import nl.jk_5.eventbus.Event;
+import nl.jk_5.eventbus.EventBus;
 import nl.jk_5.pumpkin.api.mappack.DimensionManager;
 import nl.jk_5.pumpkin.api.mappack.MappackRegistry;
+import nl.jk_5.pumpkin.api.user.UserManager;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
 import nl.jk_5.pumpkin.server.multiworld.MapLoader;
+import nl.jk_5.pumpkin.server.permissions.PermissionsHandler;
+import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.player.PlayerManager;
 import nl.jk_5.pumpkin.server.sql.SqlMappackRegistry;
 import nl.jk_5.pumpkin.server.sql.SqlServiceImpl;
 import nl.jk_5.pumpkin.server.sql.SqlTableManager;
+import nl.jk_5.pumpkin.server.sql.SqlUserManager;
+import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 import nl.jk_5.pumpkin.server.util.interfaces.SqlService;
 import nl.jk_5.pumpkin.server.web.ServerConnection;
 import nl.jk_5.pumpkin.server.web.WebEventHandler;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@NonnullByDefault
 public class Pumpkin {
 
     private static final Pumpkin INSTANCE = new Pumpkin();
@@ -35,6 +43,8 @@ public class Pumpkin {
     private final MapLoader mapLoader = new MapLoader();
     private final DimensionManagerImpl dimensionManager = new DimensionManagerImpl();
     private final PlayerManager playerManager = new PlayerManager();
+    private final PermissionsHandler permissionsHandler = new PermissionsHandler();
+    private final UserManager userManager = new SqlUserManager();
 
     private ServerConnection serverConnection;
     private SqlService sqlService = new SqlServiceImpl();
@@ -45,6 +55,9 @@ public class Pumpkin {
         eventBus.register(this.mapLoader);
         eventBus.register(this.playerManager);
         eventBus.register(WebEventHandler.instance());
+        eventBus.register(this.permissionsHandler);
+
+        permissionsHandler.register("pumpkin.group.prefix", "");
     }
 
     public void initialize(){
@@ -58,6 +71,14 @@ public class Pumpkin {
         serverConnection.connect();
 
         SqlTableManager.setupTables();
+
+        permissionsHandler.endRegistrations();
+
+        Player test = new Player(new GameProfile(UUID.randomUUID(), "jk_5"));
+        test.setUser(userManager.getByUsername("jk-5"));
+        System.out.println(permissionsHandler.hasPermission(test, "mc.command.kill"));
+        System.out.println(permissionsHandler.hasPermission(test, "mc.command.me"));
+        System.out.println(permissionsHandler.hasPermission(test, "mc.command.stop"));
     }
 
     public static Pumpkin instance(){
@@ -92,8 +113,15 @@ public class Pumpkin {
         return playerManager;
     }
 
+    public PermissionsHandler getPermissionsHandler() {
+        return permissionsHandler;
+    }
+
+    public UserManager getUserManager() {
+        return userManager;
+    }
+
     public <T extends Event> T postEvent(T event){
-        eventBus.post(event);
-        return event;
+        return eventBus.post(event);
     }
 }

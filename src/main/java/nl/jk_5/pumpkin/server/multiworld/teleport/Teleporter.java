@@ -3,7 +3,6 @@ package nl.jk_5.pumpkin.server.multiworld.teleport;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.S07PacketRespawn;
@@ -16,29 +15,29 @@ import net.minecraft.world.chunk.Chunk;
 import org.apache.commons.lang3.Validate;
 
 import nl.jk_5.pumpkin.api.mappack.Dimension;
-import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
-import nl.jk_5.pumpkin.server.util.Location;
+import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
+import nl.jk_5.pumpkin.server.util.location.Location;
 
 import java.util.Collection;
 
 @NonnullByDefault
 public class Teleporter {
 
-    public static boolean teleportPlayer(EntityPlayer player, TeleportOptions opt){
+    public static boolean teleportPlayer(Player player, TeleportOptions opt){
         Validate.notNull(player, "player");
         Validate.notNull(opt, "opt");
 
         TeleportOptions options = opt.copy(); //We don't want to accidently modify the options object passed in, so we copy it.
-        MapWorld currentWorld = Pumpkin.instance().getDimensionManager().getWorld(player.dimension);
+        MapWorld currentWorld = player.getWorld();
         /*if(!TeleportEventFactory.isTeleportAllowed(currentWorld, opt.getDestination().getWorld(), player, options)){
             return false;
         }*/
         Location location = opt.getDestination(); //TeleportEventFactory.alterDestination(currentWorld, opt.getDestination().getWorld(), player, options);
         MapWorld destinationWorld = location.getWorld();
 
-        teleportEntity(currentWorld, destinationWorld, player, location, options);
+        teleportEntity(currentWorld, destinationWorld, player.getEntity(), location, options);
         return true;
     }
 

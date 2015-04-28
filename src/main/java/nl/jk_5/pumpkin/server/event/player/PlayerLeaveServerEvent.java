@@ -1,8 +1,8 @@
 package nl.jk_5.pumpkin.server.event.player;
 
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.IChatComponent;
 
+import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 import javax.annotation.Nullable;
@@ -13,7 +13,7 @@ public class PlayerLeaveServerEvent extends PlayerEvent {
     @Nullable
     private IChatComponent leaveMessage;
 
-    public PlayerLeaveServerEvent(EntityPlayerMP player, IChatComponent leaveMessage) {
+    public PlayerLeaveServerEvent(Player player, IChatComponent leaveMessage) {
         super(player);
         this.leaveMessage = leaveMessage;
     }

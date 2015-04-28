@@ -17,6 +17,7 @@ import nl.jk_5.pumpkin.api.mappack.*;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
+import nl.jk_5.pumpkin.server.permissions.MapPermissionsHandler;
 import nl.jk_5.pumpkin.server.settings.Settings;
 
 import java.io.File;
@@ -66,7 +67,7 @@ public class MapLoader {
         targetDir.mkdir();
         boolean success = false;
         try{
-            //prepareMappack(mappack, targetDir); //TODO
+            prepareMappack(mappack, targetDir);
             success = true;
         }catch(Exception e){
             logger.warn("Exception while preparing files for lobby mappack", e);
@@ -99,16 +100,19 @@ public class MapLoader {
                 final int id = nextId.getAndIncrement();
                 final File dir = new File(mapsDir, "map_" + id);
                 dir.mkdir();
+                final Map map = new Map(mappack, dir);
                 try {
                     prepareMappack(mappack, dir);
                 } catch (Exception e) {
                     logger.warn("Exception while loading mappack", e);
                     return;
                 }
+                logger.info("Loading map permissoins");
+                MapPermissionsHandler permHandler = new MapPermissionsHandler(map);
+                permHandler.load();
                 MinecraftServer.getServer().addScheduledTask(new Runnable() {
                     @Override
                     public void run() {
-                        Map map = new Map(mappack, dir);
                         registerMap(map);
                         try{
                             loadMappackWorlds(map, mappack, "map_" + id);
@@ -129,6 +133,7 @@ public class MapLoader {
 
     private void prepareMappack(Mappack mappack, File targetDir) throws Exception {
         logger.info("Downloading files from server for mappack " + mappack.getName());
+        //TODO: this should be async
         //TODO: set trusted certificates
         HttpClient client = HttpClientBuilder.create().disableContentCompression().build();
         for(MappackFile file : mappack.getFiles()){

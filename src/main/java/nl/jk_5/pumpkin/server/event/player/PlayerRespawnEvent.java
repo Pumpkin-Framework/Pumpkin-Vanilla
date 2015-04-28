@@ -1,15 +1,15 @@
 package nl.jk_5.pumpkin.server.event.player;
 
-import net.minecraft.entity.player.EntityPlayerMP;
 import org.apache.commons.lang3.Validate;
 
-import nl.jk_5.pumpkin.server.util.Location;
+import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
+import nl.jk_5.pumpkin.server.util.location.Location;
 
 @NonnullByDefault
 public class PlayerRespawnEvent extends PlayerEvent {
 
-    protected PlayerRespawnEvent(EntityPlayerMP player) {
+    protected PlayerRespawnEvent(Player player) {
         super(player);
     }
 
@@ -19,7 +19,7 @@ public class PlayerRespawnEvent extends PlayerEvent {
         private final Location deathLocation;
         private Location respawnLocation;
 
-        public Pre(EntityPlayerMP player, Location deathLocation, Location respawnLocation) {
+        public Pre(Player player, Location deathLocation, Location respawnLocation) {
             super(player);
             this.deathLocation = deathLocation;
             this.respawnLocation = respawnLocation;
@@ -42,7 +42,7 @@ public class PlayerRespawnEvent extends PlayerEvent {
     @NonnullByDefault
     public static class Post extends PlayerRespawnEvent {
 
-        public Post(EntityPlayerMP player) {
+        public Post(Player player) {
             super(player);
         }
     }

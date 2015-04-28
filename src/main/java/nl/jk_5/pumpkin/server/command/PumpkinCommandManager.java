@@ -1,12 +1,26 @@
 package nl.jk_5.pumpkin.server.command;
 
+import static net.minecraft.command.CommandResultStats.Type.AFFECTED_ENTITIES;
+import static net.minecraft.command.CommandResultStats.Type.SUCCESS_COUNT;
+
 import net.minecraft.command.*;
 import net.minecraft.command.common.CommandReplaceItem;
 import net.minecraft.command.server.*;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.rcon.RConConsoleSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IChatComponent;
+
+import nl.jk_5.pumpkin.server.Pumpkin;
+import nl.jk_5.pumpkin.server.permissions.PermissionCommand;
+import nl.jk_5.pumpkin.server.player.Player;
+import nl.jk_5.pumpkin.server.util.CollectionUtils;
+
+import java.util.List;
 
 @SuppressWarnings("UnusedDeclaration")
 public class PumpkinCommandManager extends CommandHandler implements IAdminCommand {
@@ -22,6 +36,7 @@ public class PumpkinCommandManager extends CommandHandler implements IAdminComma
         //Pumpkin Commands
         this.registerCommand(new CommandMap());
         this.registerCommand(new CommandGoto());
+        this.registerCommand(new CommandLogin());
 
         //Vanilla commands commands
         this.registerCommand(new CommandTime());
@@ -88,22 +103,15 @@ public class PumpkinCommandManager extends CommandHandler implements IAdminComma
         CommandBase.setAdminCommander(this);
     }
 
-    public void notifyOperators(ICommandSender sender, ICommand command, int p_152372_3_, String msgFormat, Object ... msgParams){
-        boolean sendFeedback = true;
+    public void notifyOperators(ICommandSender sender, ICommand command, int flags, String msgFormat, Object ... msgParams){
         MinecraftServer server = MinecraftServer.getServer();
-
-        if(!sender.sendCommandFeedback()){
-            sendFeedback = false;
-        }
 
         ChatComponentTranslation message = new ChatComponentTranslation("chat.type.admin", sender.getCommandSenderName(), new ChatComponentTranslation(msgFormat, msgParams));
         message.getChatStyle().setColor(EnumChatFormatting.GRAY);
         message.getChatStyle().setItalic(true);
 
-        if(sendFeedback){
-            for(Object playerObj : server.getConfigurationManager().playerEntityList){
-                EntityPlayer player = (EntityPlayer) playerObj;
-
+        if(sender.sendCommandFeedback()){
+            for(EntityPlayer player : CollectionUtils.toType(server.getConfigurationManager().playerEntityList, EntityPlayer.class)){
                 if(player != sender && server.getConfigurationManager().canSendCommands(player.getGameProfile()) && command.canCommandSenderUseCommand(sender)){
                     player.addChatMessage(message);
                 }
@@ -114,14 +122,114 @@ public class PumpkinCommandManager extends CommandHandler implements IAdminComma
             server.addChatMessage(message);
         }
 
-        boolean flag1 = sender.getEntityWorld().getGameRules().getGameRuleBooleanValue("sendCommandFeedback");
+        boolean sendFeedback = sender.getEntityWorld().getGameRules().getGameRuleBooleanValue("sendCommandFeedback");
 
         if(sender instanceof CommandBlockLogic){
-            flag1 = ((CommandBlockLogic) sender).shouldTrackOutput();
+            sendFeedback = ((CommandBlockLogic) sender).shouldTrackOutput();
         }
 
-        if((p_152372_3_ & 1) != 1 && flag1){
+        if((flags & 1) != 1 && sendFeedback){
             sender.addChatMessage(new ChatComponentTranslation(msgFormat, msgParams));
         }
+    }
+
+    @Override
+    public int executeCommand(ICommandSender sender, String input) {
+        input = input.trim();
+
+        if(input.startsWith("/")){
+            input = input.substring(1);
+        }
+
+        String[] args = input.split(" ");
+        String commandName = args[0];
+        args = dropFirstString(args);
+        ICommand command = (ICommand) this.getCommands().get(commandName);
+        int usernameIndex = getUsernameIndex(command, args);
+        int success = 0;
+
+        if(command == null){
+            IChatComponent comp = new ChatComponentTranslation("commands.generic.notFound");
+            comp.getChatStyle().setColor(EnumChatFormatting.RED);
+            sender.addChatMessage(comp);
+            return 0;
+        }
+
+        boolean hasPermission = sender instanceof CommandBlockLogic || sender instanceof MinecraftServer || sender instanceof RConConsoleSource;
+
+        if(sender instanceof EntityPlayerMP){
+            Player player = Pumpkin.instance().getPlayerManager().getFromEntity(((EntityPlayerMP) sender));
+            String permName = "mc.command." + command.getCommandName();
+            if(command instanceof PermissionCommand){
+                permName = ((PermissionCommand) command).getPermission();
+            }
+            hasPermission = Pumpkin.instance().getPermissionsHandler().hasPermission(player, permName);
+        }
+
+        if(!hasPermission){
+            IChatComponent comp = new ChatComponentTranslation("commands.generic.permission");
+            comp.getChatStyle().setColor(EnumChatFormatting.RED);
+            sender.addChatMessage(comp);
+            return 0;
+        }
+
+        if(usernameIndex > -1){
+            //TODO: add an expandable selector
+            List matched = PlayerSelector.matchEntities(sender, args[usernameIndex], Entity.class);
+            String usernameInput = args[usernameIndex];
+            sender.setCommandStat(AFFECTED_ENTITIES, matched.size());
+
+            for(Entity entity : CollectionUtils.toType(matched, Entity.class)){
+                args[usernameIndex] = entity.getUniqueID().toString();
+                if(this.tryExecute(sender, args, command, input)){
+                    success ++;
+                }
+            }
+
+            args[usernameIndex] = usernameInput;
+        }else{
+            sender.setCommandStat(AFFECTED_ENTITIES, 1);
+
+            if(this.tryExecute(sender, args, command, input)){
+                success++;
+            }
+        }
+
+        sender.setCommandStat(SUCCESS_COUNT, success);
+        return success;
+    }
+
+    @Override
+    public ICommand registerCommand(ICommand command) {
+        String permName = "mc.command." + command.getCommandName();
+        if(command instanceof PermissionCommand){
+            permName = ((PermissionCommand) command).getPermission();
+        }
+        String defaultValue = "false";
+        if(command instanceof CommandBase){
+            defaultValue = ((CommandBase) command).getRequiredPermissionLevel() == 0 ? "true" : "false";
+        }
+
+        Pumpkin.instance().getPermissionsHandler().register(permName, defaultValue);
+
+        return super.registerCommand(command);
+    }
+
+    private static String[] dropFirstString(String[] input){
+        String[] newArray = new String[input.length - 1];
+        System.arraycopy(input, 1, newArray, 0, input.length - 1);
+        return newArray;
+    }
+
+    private static int getUsernameIndex(ICommand command, String[] args){
+        if(command == null){
+            return -1;
+        }
+        for(int i = 0; i < args.length; ++i){
+            if(command.isUsernameIndex(args, i) && PlayerSelector.matchesMultiplePlayers(args[i])){
+                return i;
+            }
+        }
+        return -1;
     }
 }

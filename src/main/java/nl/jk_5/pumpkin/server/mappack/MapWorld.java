@@ -4,6 +4,7 @@ import net.minecraft.world.WorldServer;
 
 import nl.jk_5.pumpkin.api.mappack.MappackWorld;
 import nl.jk_5.pumpkin.api.mappack.WorldContext;
+import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 import javax.annotation.Nullable;
@@ -37,5 +38,13 @@ public class MapWorld {
 
     public MappackWorld getConfig() {
         return config;
+    }
+
+    public void onPlayerJoined(Player player) {
+
+    }
+
+    public void onPlayerLeft(Player player) {
+
     }
 }

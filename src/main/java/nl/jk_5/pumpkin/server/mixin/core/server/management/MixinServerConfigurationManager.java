@@ -6,6 +6,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.event.ClickEvent;
+import net.minecraft.event.HoverEvent;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.NetworkManager;
@@ -19,10 +21,7 @@ import net.minecraft.server.management.ItemInWorldManager;
 import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.server.management.ServerConfigurationManager;
 import net.minecraft.stats.StatisticsFile;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IChatComponent;
+import net.minecraft.util.*;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.WorldInfo;
@@ -31,13 +30,19 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
+import nl.jk_5.pumpkin.api.user.User;
 import nl.jk_5.pumpkin.server.Pumpkin;
+import nl.jk_5.pumpkin.server.event.map.PlayerJoinMapEvent;
+import nl.jk_5.pumpkin.server.event.map.PlayerLeftMapEvent;
 import nl.jk_5.pumpkin.server.event.player.PlayerJoinServerEvent;
 import nl.jk_5.pumpkin.server.event.player.PlayerRespawnEvent;
+import nl.jk_5.pumpkin.server.event.world.PlayerJoinWorldEvent;
+import nl.jk_5.pumpkin.server.event.world.PlayerLeftWorldEvent;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.multiworld.DelegatingWorldProvider;
+import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.storage.PlayerNbtManager;
-import nl.jk_5.pumpkin.server.util.Location;
+import nl.jk_5.pumpkin.server.util.location.Location;
 
 import java.util.Collection;
 import java.util.List;
@@ -111,6 +116,10 @@ public abstract class MixinServerConfigurationManager {
 
         boolean firstJoin = playerData == null;
 
+        Player playerObj = Pumpkin.instance().getPlayerManager().getOrCreatePlayer(player);
+        playerObj.setEntity(player);
+        playerObj.setOnline(true);
+
         Location worldSpawnPoint = previousWorld.getConfig().getSpawnpoint().setWorld(previousWorld);
         Location previousLocation = firstJoin ? null : Location.builder().setWorld(previousWorld).setX(player.posX).setY(player.posY).setZ(player.posZ).setYaw(player.rotationYaw).setPitch(player.rotationPitch).build();
 
@@ -122,7 +131,7 @@ public abstract class MixinServerConfigurationManager {
         }
         joinMessage.getChatStyle().setColor(EnumChatFormatting.YELLOW);
 
-        PlayerJoinServerEvent.Pre event = Pumpkin.instance().postEvent(new PlayerJoinServerEvent.Pre(player, netManager.getRemoteAddress(), joinMessage, worldSpawnPoint, previousLocation));
+        PlayerJoinServerEvent.Pre event = Pumpkin.instance().postEvent(new PlayerJoinServerEvent.Pre(playerObj, netManager.getRemoteAddress(), joinMessage, worldSpawnPoint, previousLocation));
         if(event.getKickMessage() != null){
             netManager.sendPacket(new S00PacketDisconnect(event.getKickMessage()));
             netManager.closeChannel(event.getKickMessage());
@@ -134,6 +143,13 @@ public abstract class MixinServerConfigurationManager {
 
         player.setWorld(spawnWorld.getWrapped());
         player.theItemInWorldManager.setWorld((WorldServer) player.worldObj);
+        playerObj.setWorld(spawnWorld);
+        playerObj.setMap(spawnWorld.getMap());
+        playerObj.setNetHandler(player.playerNetServerHandler);
+        playerObj.getWorld().onPlayerJoined(playerObj);
+        if(playerObj.getMap() != null){
+            playerObj.getMap().onPlayerJoined(playerObj);
+        }
 
         String playerAddress = "local";
         if(netManager.getRemoteAddress() != null){
@@ -153,6 +169,57 @@ public abstract class MixinServerConfigurationManager {
         networkHandler.sendPacket(new S05PacketSpawnPosition(spawnLocation.toBlockPos()));
         networkHandler.sendPacket(new S39PacketPlayerAbilities(player.capabilities));
         networkHandler.sendPacket(new S09PacketHeldItemChange(player.inventory.currentItem));
+
+
+
+        User user = Pumpkin.instance().getUserManager().getByMojangId(playerObj.getUuid());
+        if(user != null){
+            event.getPlayer().setUser(user);
+
+            IChatComponent comp = new ChatComponentText("Welcome back, " + user.getUsername());
+            comp.getChatStyle().setColor(EnumChatFormatting.GREEN);
+            event.getPlayer().getEntity().addChatMessage(comp);
+        }else{
+            IChatComponent comp = new ChatComponentText("Hello " + event.getPlayer().getName() + ". Welcome to pumpkin");
+            comp.getChatStyle().setColor(EnumChatFormatting.GOLD);
+            event.getPlayer().getEntity().addChatMessage(comp);
+
+            comp = new ChatComponentText("Your minecraft account is not linked to a pumpkin account");
+            comp.getChatStyle().setColor(EnumChatFormatting.GOLD);
+            event.getPlayer().getEntity().addChatMessage(comp);
+
+            comp = new ChatComponentText("That means that we can not track your statistics");
+            comp.getChatStyle().setColor(EnumChatFormatting.GOLD);
+            event.getPlayer().getEntity().addChatMessage(comp);
+
+            comp = new ChatComponentText("If you don't have a pumpkin account yet, go to");
+            comp.getChatStyle().setColor(EnumChatFormatting.GOLD);
+            event.getPlayer().getEntity().addChatMessage(comp);
+
+            comp = new ChatComponentText("");
+            IChatComponent c2 = new ChatComponentText("https://pumpkin.jk-5.nl/#/account/new");
+            c2.getChatStyle().setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText("Click to go to the site")));
+            c2.getChatStyle().setChatClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://pumpkin.jk-5.nl/#/account/new"));
+            c2.getChatStyle().setColor(EnumChatFormatting.GREEN);
+            c2.getChatStyle().setUnderlined(true);
+            comp.appendSibling(c2);
+            c2 = new ChatComponentText(" to create one");
+            c2.getChatStyle().setColor(EnumChatFormatting.GOLD);
+            comp.appendSibling(c2);
+            event.getPlayer().getEntity().addChatMessage(comp);
+
+            comp = new ChatComponentText("If you already have one, or when you are done registering, do");
+            comp.getChatStyle().setColor(EnumChatFormatting.GOLD);
+            event.getPlayer().getEntity().addChatMessage(comp);
+
+            comp = new ChatComponentText("/login <username> <password>");
+            comp.getChatStyle().setColor(EnumChatFormatting.GREEN);
+            comp.getChatStyle().setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText("Click to log in")));
+            comp.getChatStyle().setChatClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/login "));
+            event.getPlayer().getEntity().addChatMessage(comp);
+        }
+
+
 
         //Send achievements and stats
         player.getStatFile().func_150877_d();
@@ -198,7 +265,11 @@ public abstract class MixinServerConfigurationManager {
             }
         }
 
-        Pumpkin.instance().postEvent(new PlayerJoinServerEvent.Post(player));
+        Pumpkin.instance().postEvent(new PlayerJoinServerEvent.Post(playerObj));
+        if(playerObj.getMap() != null){
+            Pumpkin.instance().postEvent(new PlayerJoinMapEvent(playerObj));
+        }
+        Pumpkin.instance().postEvent(new PlayerJoinWorldEvent(playerObj));
     }
 
     @Overwrite
@@ -227,7 +298,8 @@ public abstract class MixinServerConfigurationManager {
             }
         }
 
-        PlayerRespawnEvent.Pre event = Pumpkin.instance().postEvent(new PlayerRespawnEvent.Pre(player, deathLocation, respawnLocation));
+        Player playerObj = Pumpkin.instance().getPlayerManager().getFromEntity(player);
+        PlayerRespawnEvent.Pre event = Pumpkin.instance().postEvent(new PlayerRespawnEvent.Pre(playerObj, deathLocation, respawnLocation));
 
         if(event.getRespawnLocation() != respawnLocation){
             bedObstructed = false;
@@ -275,7 +347,34 @@ public abstract class MixinServerConfigurationManager {
         newPlayer.addSelfToInternalCraftingInventory();
         newPlayer.setHealth(newPlayer.getHealth());
 
-        Pumpkin.instance().postEvent(new PlayerRespawnEvent.Post(newPlayer));
+        playerObj.setEntity(newPlayer);
+
+        if(respawnWorld != oldWorld){
+            if(playerObj.getMap() != null){
+                Pumpkin.instance().postEvent(new PlayerLeftMapEvent(playerObj));
+            }
+            Pumpkin.instance().postEvent(new PlayerLeftWorldEvent(playerObj));
+
+            playerObj.getWorld().onPlayerLeft(playerObj);
+            if(playerObj.getMap() != null){
+                playerObj.getMap().onPlayerLeft(playerObj);
+            }
+
+            playerObj.setWorld(respawnWorld);
+            playerObj.setMap(respawnWorld.getMap());
+
+            playerObj.getWorld().onPlayerJoined(playerObj);
+            if(playerObj.getMap() != null){
+                playerObj.getMap().onPlayerJoined(playerObj);
+            }
+
+            Pumpkin.instance().postEvent(new PlayerJoinWorldEvent(playerObj));
+            if(playerObj.getMap() != null){
+                Pumpkin.instance().postEvent(new PlayerJoinMapEvent(playerObj));
+            }
+        }
+
+        Pumpkin.instance().postEvent(new PlayerRespawnEvent.Post(playerObj));
 
         return newPlayer;
     }

@@ -1,6 +1,5 @@
 package nl.jk_5.pumpkin.launch.transformer;
 
-import jk_5.eventbus.Event;
 import net.minecraft.launchwrapper.IClassTransformer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,13 +8,15 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import nl.jk_5.eventbus.Event;
+
 public class EventSubscriptionTransformer implements IClassTransformer {
 
     private static final Logger logger = LogManager.getLogger();
 
     @Override
     public byte[] transform(String name, String transformedName, byte[] bytes) {
-        if(bytes == null || name.equals("jk_5.eventbus.Event") || name.startsWith("net.minecraft.") || name.indexOf('.') == -1){
+        if(bytes == null || name.equals("nl.jk_5.eventbus.Event") || name.startsWith("net.minecraft.") || name.indexOf('.') == -1){
             return bytes;
         }
         ClassReader reader = new ClassReader(bytes);
@@ -44,7 +45,7 @@ public class EventSubscriptionTransformer implements IClassTransformer {
         boolean hasSetup = false;
         boolean hasGetHandlerList = false;
         boolean hasDefaultConstructor = false;
-        Class<?> handlerListClass = Class.forName("jk_5.eventbus.HandlerList", false, getClass().getClassLoader());
+        Class<?> handlerListClass = Class.forName("nl.jk_5.eventbus.HandlerList", false, getClass().getClassLoader());
         Type tlist = Type.getType(handlerListClass);
 
         for (MethodNode method : cnode.methods) {

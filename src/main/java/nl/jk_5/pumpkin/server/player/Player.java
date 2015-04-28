@@ -1,0 +1,95 @@
+package nl.jk_5.pumpkin.server.player;
+
+import com.mojang.authlib.GameProfile;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.NetHandlerPlayServer;
+
+import nl.jk_5.pumpkin.api.user.User;
+import nl.jk_5.pumpkin.server.mappack.Map;
+import nl.jk_5.pumpkin.server.mappack.MapWorld;
+import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
+
+import java.util.UUID;
+import javax.annotation.Nullable;
+
+@NonnullByDefault
+public class Player {
+
+    private final UUID uuid;
+
+    private GameProfile gameProfile;
+    private boolean online = false;
+
+    @Nullable private MapWorld world;
+    @Nullable private EntityPlayerMP entity;
+    @Nullable private NetHandlerPlayServer netHandler;
+    @Nullable private Map map;
+    @Nullable private User user;
+
+    public Player(GameProfile profile) {
+        this.gameProfile = profile;
+        this.uuid = profile.getId();
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public String getName() {
+        return gameProfile.getName();
+    }
+
+    public EntityPlayerMP getEntity() {
+        return entity;
+    }
+
+    public boolean isOnline() {
+        return online;
+    }
+
+    public GameProfile getGameProfile() {
+        return gameProfile;
+    }
+
+    public void setEntity(@Nullable EntityPlayerMP entity) {
+        this.entity = entity;
+    }
+
+    public void setOnline(boolean online) {
+        this.online = online;
+    }
+
+    public void setWorld(@Nullable MapWorld world) {
+        this.world = world;
+    }
+
+    public MapWorld getWorld() {
+        return world;
+    }
+
+    @Nullable
+    public Map getMap() {
+        return map;
+    }
+
+    public void setMap(@Nullable Map map) {
+        this.map = map;
+    }
+
+    public void setNetHandler(@Nullable NetHandlerPlayServer netHandler) {
+        this.netHandler = netHandler;
+    }
+
+    public void setUser(@Nullable User user) {
+        this.user = user;
+    }
+
+    @Nullable
+    public User getUser() {
+        return user;
+    }
+
+    public boolean isEditorMode(){
+        return false; //TODO
+    }
+}

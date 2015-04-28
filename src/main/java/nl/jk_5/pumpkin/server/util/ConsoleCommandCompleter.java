@@ -6,11 +6,14 @@ import jline.console.completer.Completer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import org.apache.logging.log4j.LogManager;
 
+import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
+
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+@NonnullByDefault
 public class ConsoleCommandCompleter implements Completer {
 
     private final DedicatedServer server;

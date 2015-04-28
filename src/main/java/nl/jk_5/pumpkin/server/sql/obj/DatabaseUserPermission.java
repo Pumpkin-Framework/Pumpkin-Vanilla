@@ -3,8 +3,6 @@ package nl.jk_5.pumpkin.server.sql.obj;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
-import java.util.UUID;
-
 @DatabaseTable(tableName = "user_permission")
 public class DatabaseUserPermission {
 
@@ -14,8 +12,8 @@ public class DatabaseUserPermission {
     @DatabaseField(uniqueCombo = true)
     private String permission;
 
-    @DatabaseField(uniqueCombo = true)
-    private UUID user;
+    @DatabaseField(foreign = true, uniqueCombo = true, columnName = "user_id")
+    private DatabaseUser user;
 
     @DatabaseField
     private String value;

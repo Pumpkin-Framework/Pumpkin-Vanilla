@@ -62,8 +62,12 @@ dependencies {
     compile 'org.postgresql:postgresql:9.4-1201-jdbc41'
     compile 'org.javassist:javassist:3.19.0-GA'
     compile 'com.j256.ormlite:ormlite-jdbc:4.48'
-    compile 'jk_5.eventbus:EventBus:2.0.1'
+    compile 'nl.jk_5.eventbus:EventBus:3.0.1'
+    compile 'nl.jk_5.eventbus:EventBus-processor:1.0.2'
     compile 'jline:jline:2.12.1'
+    compile 'de.svenkubiak:jBCrypt:0.4'
+
+    testCompile 'junit:junit:4.12'
 }
 
 ext {

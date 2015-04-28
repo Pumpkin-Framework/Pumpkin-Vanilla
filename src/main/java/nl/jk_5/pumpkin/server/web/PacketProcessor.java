@@ -22,7 +22,7 @@ class PacketProcessor {
         JsonObject init = new JsonObject();
 
         JsonArray online = new JsonArray();
-        for(GameProfile gameProfile : Pumpkin.instance().getPlayerManager().getOnlinePlayers()){
+        for(GameProfile gameProfile : Pumpkin.instance().getPlayerManager().getOnlineProfiles()){
             JsonObject player = new JsonObject();
             player.addProperty("id", gameProfile.getId().toString());
             player.addProperty("name", gameProfile.getName());

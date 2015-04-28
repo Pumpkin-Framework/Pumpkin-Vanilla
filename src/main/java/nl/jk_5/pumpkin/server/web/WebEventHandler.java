@@ -1,8 +1,8 @@
 package nl.jk_5.pumpkin.server.web;
 
 import com.google.gson.JsonObject;
-import jk_5.eventbus.EventHandler;
 
+import nl.jk_5.eventbus.EventHandler;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.event.player.PlayerJoinServerEvent;
 import nl.jk_5.pumpkin.server.event.player.PlayerLeaveServerEvent;

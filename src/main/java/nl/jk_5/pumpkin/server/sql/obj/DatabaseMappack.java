@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Date;
 
 @DatabaseTable(tableName = "mappacks")
+@SuppressWarnings("unused")
 public class DatabaseMappack implements Mappack {
 
     @DatabaseField(generatedId = true)
@@ -49,6 +50,9 @@ public class DatabaseMappack implements Mappack {
     @ForeignCollectionField
     private ForeignCollection<DatabaseGamerule> gamerules;
 
+    @ForeignCollectionField
+    private ForeignCollection<DatabaseZone> zones;
+
     public DatabaseMappack() {
     }
 
@@ -68,32 +72,33 @@ public class DatabaseMappack implements Mappack {
         return id;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Collection<MappackAuthor> getAuthors() {
-        //this is ugly, but java compiler is being stupid
-        //noinspection unchecked
         return ((Collection) this.authors);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Collection<MappackWorld> getWorlds() {
-        //this is ugly, but java compiler is being stupid
-        //noinspection unchecked
         return ((Collection) this.worlds);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Collection<MappackFile> getFiles() {
-        //this is ugly, but java compiler is being stupid
-        //noinspection unchecked
         return ((Collection) this.files);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Collection<GameRule> getGameRules() {
-        //this is ugly, but java compiler is being stupid
-        //noinspection unchecked
         return ((Collection) this.gamerules);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Collection<DatabaseZone> getZones() {
+        return this.zones;
     }
 
     public Collection<DatabaseMappackTeam> getTeams() {

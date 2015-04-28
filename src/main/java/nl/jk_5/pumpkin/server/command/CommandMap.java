@@ -40,6 +40,8 @@ public class CommandMap extends BaseCommand {
                     @Override
                     public void run() {
                         Map map = getFutureResult(future);
+                        if(map == null) return;
+
                         ChatComponentText component = new ChatComponentText("Loaded ");
                         component.getChatStyle().setColor(EnumChatFormatting.GREEN);
 
