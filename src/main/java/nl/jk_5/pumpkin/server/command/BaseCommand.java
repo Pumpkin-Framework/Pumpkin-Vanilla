@@ -103,7 +103,7 @@ abstract class BaseCommand extends ComparedCommand implements PermissionCommand 
         //return getOptions(args, );
     }
 
-    protected static EntityPlayerMP selectPlayer(ICommandSender sender, String query) throws CommandException {
+    protected static Player selectPlayer(ICommandSender sender, String query) throws CommandException {
         EntityPlayerMP player = PlayerSelector.matchOnePlayer(sender, query);
         if(player == null){
             player = MinecraftServer.getServer().getConfigurationManager().getPlayerByUsername(query);
@@ -111,22 +111,29 @@ abstract class BaseCommand extends ComparedCommand implements PermissionCommand 
         if(player == null){
             throw new PlayerNotFoundException();
         }
-        return player;
+        return Pumpkin.instance().getPlayerManager().getFromEntity(player);
     }
 
-    protected static List<EntityPlayerMP> selectPlayers(ICommandSender sender, String query) throws CommandException {
+    protected static List<Player> selectPlayers(ICommandSender sender, String query) throws CommandException {
         List<EntityPlayerMP> players = select(sender, query, EntityPlayerMP.class);
         if(players.isEmpty()){
-            EntityPlayerMP player = MinecraftServer.getServer().getConfigurationManager().getPlayerByUsername(query);
-            if(player == null){
+            EntityPlayerMP p = MinecraftServer.getServer().getConfigurationManager().getPlayerByUsername(query);
+            if(p == null){
                 throw new PlayerNotFoundException();
             }
-            players = ImmutableList.of(player);
+            Player player = Pumpkin.instance().getPlayerManager().getFromEntity(p);
+            return ImmutableList.of(player);
+        }else{
+            ImmutableList.Builder<Player> builder = ImmutableList.builder();
+            for (EntityPlayerMP player : players) {
+                builder.add(Pumpkin.instance().getPlayerManager().getFromEntity(player));
+            }
+            return builder.build();
         }
-        return players;
     }
 
     protected static <T extends Entity> List<T> select(ICommandSender sender, String query, Class<? extends T> target) throws CommandException {
+        //TODO: check if sender has permission to use selectors
         @SuppressWarnings("unchecked")
         List<T> out = PlayerSelector.matchEntities(sender, query, target);
         if(out == null || out.isEmpty()){

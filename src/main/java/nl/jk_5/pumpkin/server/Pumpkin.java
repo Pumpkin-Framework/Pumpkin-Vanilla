@@ -1,6 +1,5 @@
 package nl.jk_5.pumpkin.server;
 
-import com.mojang.authlib.GameProfile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.postgresql.Driver;
@@ -13,7 +12,6 @@ import nl.jk_5.pumpkin.api.user.UserManager;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
 import nl.jk_5.pumpkin.server.multiworld.MapLoader;
 import nl.jk_5.pumpkin.server.permissions.PermissionsHandler;
-import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.player.PlayerManager;
 import nl.jk_5.pumpkin.server.sql.SqlMappackRegistry;
 import nl.jk_5.pumpkin.server.sql.SqlServiceImpl;
@@ -26,7 +24,6 @@ import nl.jk_5.pumpkin.server.web.WebEventHandler;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -73,12 +70,6 @@ public class Pumpkin {
         SqlTableManager.setupTables();
 
         permissionsHandler.endRegistrations();
-
-        Player test = new Player(new GameProfile(UUID.randomUUID(), "jk_5"));
-        test.setUser(userManager.getByUsername("jk-5"));
-        System.out.println(permissionsHandler.hasPermission(test, "mc.command.kill"));
-        System.out.println(permissionsHandler.hasPermission(test, "mc.command.me"));
-        System.out.println(permissionsHandler.hasPermission(test, "mc.command.stop"));
     }
 
     public static Pumpkin instance(){

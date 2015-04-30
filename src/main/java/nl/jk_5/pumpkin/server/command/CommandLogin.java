@@ -17,7 +17,7 @@ import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 import java.util.UUID;
 
 @NonnullByDefault
-public class CommandLogin extends BaseCommand {
+class CommandLogin extends BaseCommand {
 
     public CommandLogin() {
         super("login");

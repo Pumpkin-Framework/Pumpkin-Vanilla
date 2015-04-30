@@ -16,7 +16,7 @@ import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 @NonnullByDefault
-public class CommandMap extends BaseCommand {
+class CommandMap extends BaseCommand {
 
     public CommandMap() {
         super("map");

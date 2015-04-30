@@ -24,8 +24,6 @@ public class PermissionsList {
     private final List<String> wildcards = new ArrayList<String>();
     private final List<String> recursiveWildcards = new ArrayList<String>();
 
-    private final UnmodifiablePermissionsList unmodifiable = new UnmodifiablePermissionsList(this);
-
     public boolean isEmpty() {
         return map.isEmpty();
     }
@@ -170,10 +168,6 @@ public class PermissionsList {
             }
         }
         out.println("==========================================");
-    }
-
-    public UnmodifiablePermissionsList unmodifiable(){
-        return unmodifiable;
     }
 
     private static class MostDotsComparator implements Comparator<String> {

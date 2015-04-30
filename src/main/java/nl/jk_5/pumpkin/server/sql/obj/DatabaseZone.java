@@ -30,7 +30,7 @@ public class DatabaseZone {
     private DatabaseMappackWorld world;
 
     @DatabaseField(uniqueCombo = true, columnName = "team_id", foreign = true, foreignAutoRefresh = true, canBeNull = true)
-    private DatabaseMappackWorld team;
+    private DatabaseMappackTeam team;
 
     @ForeignCollectionField
     private ForeignCollection<DatabaseGroup> groups;

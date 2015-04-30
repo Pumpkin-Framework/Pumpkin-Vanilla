@@ -13,7 +13,7 @@ import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 @NonnullByDefault
-public class CommandGoto extends BaseCommand {
+class CommandGoto extends BaseCommand {
 
     public CommandGoto() {
         super("goto");

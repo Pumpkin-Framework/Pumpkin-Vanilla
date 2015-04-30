@@ -3,7 +3,12 @@ package nl.jk_5.pumpkin.server.player;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IChatComponent;
+import net.minecraft.world.WorldSettings;
 
+import nl.jk_5.pumpkin.api.Gamemode;
 import nl.jk_5.pumpkin.api.user.User;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
@@ -91,5 +96,30 @@ public class Player {
 
     public boolean isEditorMode(){
         return false; //TODO
+    }
+
+    public void setGamemode(Gamemode gm){
+        getEntity().setGameType(WorldSettings.GameType.getByID(gm.getId()));
+        IChatComponent comp = null;
+        switch(getGamemode()){
+            case SURVIVAL:
+                comp = new ChatComponentText("Your game mode was changed to survival");
+                break;
+            case CREATIVE:
+                comp = new ChatComponentText("Your game mode was changed to creative");
+                break;
+            case ADVENTURE:
+                comp = new ChatComponentText("Your game mode was changed to adventure");
+                break;
+            case SPECTATOR:
+                comp = new ChatComponentText("Your game mode was changed to spectator");
+                break;
+        }
+        comp.getChatStyle().setColor(EnumChatFormatting.GREEN);
+        getEntity().addChatMessage(comp);
+    }
+
+    public Gamemode getGamemode(){
+        return Gamemode.getById(getEntity().theItemInWorldManager.getGameType().getID());
     }
 }

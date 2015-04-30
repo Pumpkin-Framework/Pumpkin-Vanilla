@@ -69,6 +69,7 @@ public class ServerTweaker implements ITweaker {
         logger.info("Initializing Mixin environment...");
         MixinBootstrap.init();
         MixinEnvironment env = MixinEnvironment.getDefaultEnvironment();
+        env.setSide(MixinEnvironment.Side.SERVER);
         env.addConfiguration("mixins.pumpkin.core.json");
         env.setSide(MixinEnvironment.Side.SERVER);
 

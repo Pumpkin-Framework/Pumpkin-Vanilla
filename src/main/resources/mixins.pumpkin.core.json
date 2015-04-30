@@ -5,6 +5,7 @@
   "server": [
     "MixinBootstrap",
     "entity.player.MixinEntityPlayer",
+    "entity.player.MixinEntityPlayerMP",
     "network.MixinNetHandlerPlayServer",
     "server.MixinMinecraftServer",
     "server.dedicated.MixinConsoleHandler",

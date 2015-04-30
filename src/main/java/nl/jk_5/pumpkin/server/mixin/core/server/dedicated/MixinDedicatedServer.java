@@ -166,4 +166,9 @@ public abstract class MixinDedicatedServer extends MinecraftServer {
     public boolean isAnnouncingPlayerAchievements(){
         return true;
     }
+
+    @Overwrite
+    public boolean getAllowNether(){
+        return true;
+    }
 }

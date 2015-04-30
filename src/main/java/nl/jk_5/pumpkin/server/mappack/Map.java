@@ -1,5 +1,7 @@
 package nl.jk_5.pumpkin.server.mappack;
 
+import net.minecraft.stats.StatisticsFile;
+
 import nl.jk_5.pumpkin.api.mappack.Mappack;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.permissions.MapPermissionsHandler;
@@ -8,6 +10,8 @@ import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.UUID;
 
 @NonnullByDefault
 public class Map {
@@ -17,6 +21,8 @@ public class Map {
     private final String internalName;
 
     private final MapPermissionsHandler permissionsHandler = new MapPermissionsHandler(this);
+
+    private final java.util.Map<UUID, StatisticsFile> playerStats = new HashMap<UUID, StatisticsFile>();
 
     private MapWorld defaultWorld;
 
@@ -61,5 +67,13 @@ public class Map {
 
     public MapPermissionsHandler getPermissionsHandler() {
         return permissionsHandler;
+    }
+
+    public java.util.Map<UUID, StatisticsFile> getPlayerStats() {
+        return playerStats;
+    }
+
+    public File getDir() {
+        return dir;
     }
 }

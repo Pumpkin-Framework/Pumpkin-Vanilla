@@ -108,8 +108,6 @@ public class PermissionsHandler implements PermissionRegistrar {
         //TODO: first check map permissions
         //if player is not in editor mode, check map permissions
 
-        logger.info("Permission check for " + user + " on " + permission);
-
         if(map != null){
             String value = map.getPermissionsHandler().getPermission(user, permission);
 

@@ -9,16 +9,20 @@ import com.mojang.util.QueueLogAppender;
 import jline.console.ConsoleReader;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.fusesource.jansi.AnsiConsole;
+
+import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import javax.annotation.Nullable;
 
+@NonnullByDefault
 public final class VanillaConsole {
 
     private VanillaConsole() {}
 
+    @Nullable
     private static ConsoleReader reader;
 
     public static ConsoleReader getReader() {
@@ -52,9 +56,8 @@ public final class VanillaConsole {
             }
         }
 
-        Logger logger = LogManager.getRootLogger();
-        System.setOut(new PrintStream(new LoggingOutputStream(logger, Level.INFO), true));
-        System.setErr(new PrintStream(new LoggingOutputStream(logger, Level.ERROR), true));
+        System.setOut(new PrintStream(new LoggingOutputStream(LogManager.getLogger("SYSOUT"), Level.INFO), true));
+        System.setErr(new PrintStream(new LoggingOutputStream(LogManager.getLogger("SYSERR"), Level.ERROR), true));
 
         Thread thread = new Thread(new Writer(), "Pumpkin Console Thread");
         thread.setDaemon(true);
@@ -66,6 +69,8 @@ public final class VanillaConsole {
         @Override
         public void run() {
             String message;
+
+            assert reader != null;
 
             //noinspection InfiniteLoopStatement
             while(true){

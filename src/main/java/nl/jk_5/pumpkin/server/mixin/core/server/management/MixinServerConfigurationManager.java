@@ -179,6 +179,18 @@ public abstract class MixinServerConfigurationManager {
             IChatComponent comp = new ChatComponentText("Welcome back, " + user.getUsername());
             comp.getChatStyle().setColor(EnumChatFormatting.GREEN);
             event.getPlayer().getEntity().addChatMessage(comp);
+
+            S47PacketPlayerListHeaderFooter packet = new S47PacketPlayerListHeaderFooter();
+            packet.header = new ChatComponentText("Pumpkin");
+            packet.header.getChatStyle().setColor(EnumChatFormatting.AQUA);
+            packet.footer = new ChatComponentText("See your stats on ");
+            packet.footer.getChatStyle().setColor(EnumChatFormatting.AQUA);
+            IChatComponent comp2 = new ChatComponentText("https://pumpkin.jk-5.nl/#/user/" + user.getUsername());
+            comp2.getChatStyle().setColor(EnumChatFormatting.GOLD);
+            comp2.getChatStyle().setUnderlined(true);
+            packet.footer.appendSibling(comp2);
+
+            networkHandler.sendPacket(packet);
         }else{
             IChatComponent comp = new ChatComponentText("Hello " + event.getPlayer().getName() + ". Welcome to pumpkin");
             comp.getChatStyle().setColor(EnumChatFormatting.GOLD);
@@ -217,6 +229,18 @@ public abstract class MixinServerConfigurationManager {
             comp.getChatStyle().setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText("Click to log in")));
             comp.getChatStyle().setChatClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/login "));
             event.getPlayer().getEntity().addChatMessage(comp);
+
+            S47PacketPlayerListHeaderFooter packet = new S47PacketPlayerListHeaderFooter();
+            packet.header = new ChatComponentText("Pumpkin");
+            packet.header.getChatStyle().setColor(EnumChatFormatting.AQUA);
+            packet.footer = new ChatComponentText("Do /login or create an account on ");
+            packet.footer.getChatStyle().setColor(EnumChatFormatting.AQUA);
+            IChatComponent comp2 = new ChatComponentText("https://pumpkin.jk-5.nl/#/account/new");
+            comp2.getChatStyle().setColor(EnumChatFormatting.GOLD);
+            comp2.getChatStyle().setUnderlined(true);
+            packet.footer.appendSibling(comp2);
+
+            networkHandler.sendPacket(packet);
         }
 
 
@@ -388,14 +412,52 @@ public abstract class MixinServerConfigurationManager {
     protected void writePlayerData(EntityPlayerMP playerIn){
         PlayerNbtManager.instance().writePlayerData(playerIn);
 
-        StatisticsFile statisticsfile = this.playerStatFiles.get(playerIn.getUniqueID());
-        if(statisticsfile != null){
-            statisticsfile.saveStatFile();
-        }
+        MapWorld world = Pumpkin.instance().getDimensionManager().getWorld(playerIn.dimension);
+
+        //assert world.getMap() != null;
+        /*StatisticsFile statsFile = world.getMap().getPlayerStats().get(playerIn.getUniqueID());
+        if(statsFile != null){
+            statsFile.saveStatFile();
+        }*/
     }
 
     @Overwrite
     public String[] getAvailablePlayerDat() {
         return PlayerNbtManager.instance().getAvailablePlayerDat();
     }
+
+    /*@Overwrite
+    public StatisticsFile getPlayerStatsFile(EntityPlayer playerEntity){
+        Player player = Pumpkin.instance().getPlayerManager().getFromEntity(((EntityPlayerMP) playerEntity));
+        //noinspection ConstantConditions
+        if(player == null){
+            File statsDir = new File("stats");
+            statsDir.mkdirs();
+            return new StatisticsFile(MinecraftServer.getServer(), new File(statsDir, playerEntity.getUniqueID().toString() + ".json"));
+        }
+        MapWorld world = Pumpkin.instance().getDimensionManager().getWorld(((EntityPlayerMP) playerEntity).dimension);
+        nl.jk_5.pumpkin.server.mappack.Map map = world.getMap();
+        //assert map != null;
+        UUID uuid = player.getUuid();
+        StatisticsFile statsFile = map.getPlayerStats().get(uuid);
+
+        if(statsFile == null){
+            File statsDir = new File(map.getDir(), "stats");
+            statsDir.mkdir();
+            File statsStorage = new File(statsDir, uuid.toString() + ".json");
+
+            statsFile = new StatisticsFile(this.mcServer, statsStorage);
+            statsFile.readStatFile();
+            map.getPlayerStats().put(uuid, statsFile);
+        }
+
+        return statsFile;
+    }
+
+    @Inject(method = "playerLoggedOut(Lnet/minecraft/entity/player/EntityPlayerMP;)V", at = @At("RETURN"))
+    public void playerLoggedOut(EntityPlayerMP playerIn, CallbackInfo info){
+        MapWorld world = Pumpkin.instance().getDimensionManager().getWorld(playerIn.dimension);
+        //assert world.getMap() != null;
+        world.getMap().getPlayerStats().remove(playerIn.getUniqueID());
+    }*/
 }

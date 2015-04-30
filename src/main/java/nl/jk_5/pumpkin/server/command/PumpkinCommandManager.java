@@ -3,6 +3,7 @@ package nl.jk_5.pumpkin.server.command;
 import static net.minecraft.command.CommandResultStats.Type.AFFECTED_ENTITIES;
 import static net.minecraft.command.CommandResultStats.Type.SUCCESS_COUNT;
 
+import com.google.common.collect.Lists;
 import net.minecraft.command.*;
 import net.minecraft.command.common.CommandReplaceItem;
 import net.minecraft.command.server.*;
@@ -11,6 +12,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.rcon.RConConsoleSource;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
@@ -20,7 +22,10 @@ import nl.jk_5.pumpkin.server.permissions.PermissionCommand;
 import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @SuppressWarnings("UnusedDeclaration")
 public class PumpkinCommandManager extends CommandHandler implements IAdminCommand {
@@ -37,10 +42,10 @@ public class PumpkinCommandManager extends CommandHandler implements IAdminComma
         this.registerCommand(new CommandMap());
         this.registerCommand(new CommandGoto());
         this.registerCommand(new CommandLogin());
+        this.registerCommand(new CommandGamemode());
 
         //Vanilla commands commands
         this.registerCommand(new CommandTime());
-        this.registerCommand(new CommandGameMode());
         this.registerCommand(new CommandDifficulty());
         this.registerCommand(new CommandDefaultGameMode());
         this.registerCommand(new CommandKill());
@@ -84,8 +89,8 @@ public class PumpkinCommandManager extends CommandHandler implements IAdminComma
         this.registerCommand(new CommandEntityData());
 
         //Server-only vanilla commands
-        this.registerCommand(new CommandOp());
-        this.registerCommand(new CommandDeOp());
+        //this.registerCommand(new CommandOp());
+        //this.registerCommand(new CommandDeOp());
         this.registerCommand(new CommandStop());
         this.registerCommand(new CommandSaveAll());
         this.registerCommand(new CommandSaveOff());
@@ -197,6 +202,48 @@ public class PumpkinCommandManager extends CommandHandler implements IAdminComma
 
         sender.setCommandStat(SUCCESS_COUNT, success);
         return success;
+    }
+
+    @Override
+    public List getTabCompletionOptions(ICommandSender sender, String input, BlockPos pos){
+        assert sender instanceof EntityPlayerMP;
+        Player player = Pumpkin.instance().getPlayerManager().getFromEntity(((EntityPlayerMP) sender));
+
+        String[] args = input.split(" ", -1);
+        String commandName = args[0];
+
+        if(args.length == 1){
+            ArrayList ret = Lists.newArrayList();
+
+            //noinspection unchecked
+            for(Map.Entry<String, ICommand> e : (Set<Map.Entry<String, ICommand>>) this.getCommands().entrySet()){
+                if(CommandBase.doesStringStartWith(commandName, e.getKey())){
+                    String permName = "mc.command." + e.getValue().getCommandName();
+                    if(e.getValue() instanceof PermissionCommand){
+                        permName = ((PermissionCommand) e.getValue()).getPermission();
+                    }
+                    if(Pumpkin.instance().getPermissionsHandler().hasPermission(player, permName)){
+                        ret.add(e.getKey());
+                    }
+                }
+            }
+            return ret;
+        }else{
+            if(args.length > 1){
+                ICommand icommand = ((ICommand) this.getCommands().get(commandName));
+                if(icommand != null){
+                    String permName = "mc.command." + icommand.getCommandName();
+                    if(icommand instanceof PermissionCommand){
+                        permName = ((PermissionCommand) icommand).getPermission();
+                    }
+                    if(Pumpkin.instance().getPermissionsHandler().hasPermission(player, permName)){
+                        return icommand.addTabCompletionOptions(sender, dropFirstString(args), pos);
+                    }
+
+                }
+            }
+            return null;
+        }
     }
 
     @Override
