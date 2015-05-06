@@ -2,10 +2,10 @@ package nl.jk_5.pumpkin.server.web;
 
 import com.google.gson.JsonObject;
 
-import nl.jk_5.eventbus.EventHandler;
+import nl.jk_5.pumpkin.api.event.EventHandler;
+import nl.jk_5.pumpkin.api.event.player.PlayerLeaveServerEvent;
+import nl.jk_5.pumpkin.api.event.player.PlayerPostJoinServerEvent;
 import nl.jk_5.pumpkin.server.Pumpkin;
-import nl.jk_5.pumpkin.server.event.player.PlayerJoinServerEvent;
-import nl.jk_5.pumpkin.server.event.player.PlayerLeaveServerEvent;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 @NonnullByDefault
@@ -21,7 +21,7 @@ public final class WebEventHandler {
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinServerEvent.Post event){
+    public void onPlayerJoin(PlayerPostJoinServerEvent event){
         JsonObject pack = new JsonObject();
         JsonObject player = new JsonObject();
         pack.addProperty("type", "player-join");

@@ -30,20 +30,18 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
+import nl.jk_5.pumpkin.api.event.PumpkinEventFactory;
+import nl.jk_5.pumpkin.api.event.player.PlayerPreJoinServerEvent;
+import nl.jk_5.pumpkin.api.event.player.PlayerPreRespawnEvent;
 import nl.jk_5.pumpkin.api.user.User;
 import nl.jk_5.pumpkin.server.Pumpkin;
-import nl.jk_5.pumpkin.server.event.map.PlayerJoinMapEvent;
-import nl.jk_5.pumpkin.server.event.map.PlayerLeftMapEvent;
-import nl.jk_5.pumpkin.server.event.player.PlayerJoinServerEvent;
-import nl.jk_5.pumpkin.server.event.player.PlayerRespawnEvent;
-import nl.jk_5.pumpkin.server.event.world.PlayerJoinWorldEvent;
-import nl.jk_5.pumpkin.server.event.world.PlayerLeftWorldEvent;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.multiworld.DelegatingWorldProvider;
 import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.storage.PlayerNbtManager;
 import nl.jk_5.pumpkin.server.util.location.Location;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -131,7 +129,8 @@ public abstract class MixinServerConfigurationManager {
         }
         joinMessage.getChatStyle().setColor(EnumChatFormatting.YELLOW);
 
-        PlayerJoinServerEvent.Pre event = Pumpkin.instance().postEvent(new PlayerJoinServerEvent.Pre(playerObj, netManager.getRemoteAddress(), joinMessage, worldSpawnPoint, previousLocation));
+        PlayerPreJoinServerEvent event = PumpkinEventFactory.createPlayerPreJoinServerEvent(playerObj, ((InetSocketAddress) netManager.getRemoteAddress()), joinMessage, worldSpawnPoint, previousLocation);
+        Pumpkin.instance().postEvent(event);
         if(event.getKickMessage() != null){
             netManager.sendPacket(new S00PacketDisconnect(event.getKickMessage()));
             netManager.closeChannel(event.getKickMessage());
@@ -289,11 +288,11 @@ public abstract class MixinServerConfigurationManager {
             }
         }
 
-        Pumpkin.instance().postEvent(new PlayerJoinServerEvent.Post(playerObj));
+        Pumpkin.instance().postEvent(PumpkinEventFactory.createPlayerPostJoinServerEvent(playerObj));
         if(playerObj.getMap() != null){
-            Pumpkin.instance().postEvent(new PlayerJoinMapEvent(playerObj));
+            Pumpkin.instance().postEvent(PumpkinEventFactory.createPlayerJoinMapEvent(playerObj.getMap(), playerObj));
         }
-        Pumpkin.instance().postEvent(new PlayerJoinWorldEvent(playerObj));
+        Pumpkin.instance().postEvent(PumpkinEventFactory.createPlayerJoinWorldEvent(playerObj.getWorld(), playerObj));
     }
 
     @Overwrite
@@ -323,7 +322,8 @@ public abstract class MixinServerConfigurationManager {
         }
 
         Player playerObj = Pumpkin.instance().getPlayerManager().getFromEntity(player);
-        PlayerRespawnEvent.Pre event = Pumpkin.instance().postEvent(new PlayerRespawnEvent.Pre(playerObj, deathLocation, respawnLocation));
+        PlayerPreRespawnEvent event = PumpkinEventFactory.createPlayerPreRespawnEvent(playerObj, deathLocation, respawnLocation);
+        Pumpkin.instance().postEvent(event);
 
         if(event.getRespawnLocation() != respawnLocation){
             bedObstructed = false;
@@ -375,9 +375,9 @@ public abstract class MixinServerConfigurationManager {
 
         if(respawnWorld != oldWorld){
             if(playerObj.getMap() != null){
-                Pumpkin.instance().postEvent(new PlayerLeftMapEvent(playerObj));
+                Pumpkin.instance().postEvent(PumpkinEventFactory.createPlayerLeaveMapEvent(playerObj.getMap(), playerObj));
             }
-            Pumpkin.instance().postEvent(new PlayerLeftWorldEvent(playerObj));
+            Pumpkin.instance().postEvent(PumpkinEventFactory.createPlayerLeaveWorldEvent(playerObj.getWorld(), playerObj));
 
             playerObj.getWorld().onPlayerLeft(playerObj);
             if(playerObj.getMap() != null){
@@ -392,13 +392,13 @@ public abstract class MixinServerConfigurationManager {
                 playerObj.getMap().onPlayerJoined(playerObj);
             }
 
-            Pumpkin.instance().postEvent(new PlayerJoinWorldEvent(playerObj));
+            Pumpkin.instance().postEvent(PumpkinEventFactory.createPlayerJoinWorldEvent(playerObj.getWorld(), playerObj));
             if(playerObj.getMap() != null){
-                Pumpkin.instance().postEvent(new PlayerJoinMapEvent(playerObj));
+                Pumpkin.instance().postEvent(PumpkinEventFactory.createPlayerJoinMapEvent(playerObj.getMap(), playerObj));
             }
         }
 
-        Pumpkin.instance().postEvent(new PlayerRespawnEvent.Post(playerObj));
+        Pumpkin.instance().postEvent(PumpkinEventFactory.createPlayerPostRespawnEvent(playerObj));
 
         return newPlayer;
     }

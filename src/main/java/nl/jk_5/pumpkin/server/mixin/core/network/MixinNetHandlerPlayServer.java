@@ -15,11 +15,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
+import nl.jk_5.pumpkin.api.event.PumpkinEventFactory;
+import nl.jk_5.pumpkin.api.event.player.PlayerChatEvent;
+import nl.jk_5.pumpkin.api.event.player.PlayerLeaveServerEvent;
 import nl.jk_5.pumpkin.server.Pumpkin;
-import nl.jk_5.pumpkin.server.event.map.PlayerLeftMapEvent;
-import nl.jk_5.pumpkin.server.event.player.PlayerChatEvent;
-import nl.jk_5.pumpkin.server.event.player.PlayerLeaveServerEvent;
-import nl.jk_5.pumpkin.server.event.world.PlayerLeftWorldEvent;
 import nl.jk_5.pumpkin.server.player.Player;
 
 @Mixin(NetHandlerPlayServer.class)
@@ -49,13 +48,14 @@ public abstract class MixinNetHandlerPlayServer {
         }
         player.setOnline(false);
 
-        PlayerLeaveServerEvent event = Pumpkin.instance().postEvent(new PlayerLeaveServerEvent(player, leaveMessage));
+        PlayerLeaveServerEvent event = PumpkinEventFactory.createPlayerLeaveServerEvent(player, leaveMessage);
+        Pumpkin.instance().postEvent(event);
         leaveMessage = event.getLeaveMessage();
 
         if(player.getMap() != null){
-            Pumpkin.instance().postEvent(new PlayerLeftMapEvent(player));
+            Pumpkin.instance().postEvent(PumpkinEventFactory.createPlayerLeaveMapEvent(player.getMap(), player));
         }
-        Pumpkin.instance().postEvent(new PlayerLeftWorldEvent(player));
+        Pumpkin.instance().postEvent(PumpkinEventFactory.createPlayerLeaveWorldEvent(player.getWorld(), player));
 
         player.getWorld().onPlayerLeft(player);
         if(player.getMap() != null){
@@ -108,9 +108,10 @@ public abstract class MixinNetHandlerPlayServer {
                 comp.appendSibling(name);
 
                 Player player = Pumpkin.instance().getPlayerManager().getFromEntity(this.playerEntity);
-                PlayerChatEvent event = Pumpkin.instance().postEvent(new PlayerChatEvent(player, msg, comp));
+                PlayerChatEvent event = PumpkinEventFactory.createPlayerChatEvent(player, msg, comp);
+                Pumpkin.instance().postEvent(event);
 
-                if(!event.isCanceled() && event.getMessage() != null){
+                if(!event.isCancelled() && event.getMessage() != null){
                     MinecraftServer.getServer().getConfigurationManager().sendChatMsgImpl(event.getMessage(), false);
                 }
             }

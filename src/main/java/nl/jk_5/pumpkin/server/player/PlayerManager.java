@@ -3,9 +3,9 @@ package nl.jk_5.pumpkin.server.player;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.EntityPlayerMP;
 
-import nl.jk_5.eventbus.EventHandler;
-import nl.jk_5.pumpkin.server.event.player.PlayerJoinServerEvent;
-import nl.jk_5.pumpkin.server.event.player.PlayerLeaveServerEvent;
+import nl.jk_5.pumpkin.api.event.EventHandler;
+import nl.jk_5.pumpkin.api.event.player.PlayerLeaveServerEvent;
+import nl.jk_5.pumpkin.api.event.player.PlayerPostJoinServerEvent;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 import java.util.*;
@@ -43,7 +43,7 @@ public class PlayerManager {
     }
 
     @EventHandler
-    public void onJoin(PlayerJoinServerEvent.Post event){
+    public void onJoin(PlayerPostJoinServerEvent event){
         this.onlinePlayers.add(event.getPlayer());
     }
 

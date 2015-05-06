@@ -6,13 +6,14 @@ import net.minecraft.util.IChatComponent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.jk_5.eventbus.EventHandler;
-import nl.jk_5.eventbus.EventPriority;
+import nl.jk_5.pumpkin.api.event.EventHandler;
+import nl.jk_5.pumpkin.api.event.Order;
+import nl.jk_5.pumpkin.api.event.PumpkinEventFactory;
+import nl.jk_5.pumpkin.api.event.permission.RegisterPermissionsEvent;
+import nl.jk_5.pumpkin.api.event.player.PlayerChatEvent;
+import nl.jk_5.pumpkin.api.event.player.PlayerPostJoinServerEvent;
 import nl.jk_5.pumpkin.api.user.User;
 import nl.jk_5.pumpkin.server.Pumpkin;
-import nl.jk_5.pumpkin.server.event.player.PlayerChatEvent;
-import nl.jk_5.pumpkin.server.event.player.PlayerJoinServerEvent;
-import nl.jk_5.pumpkin.server.event.player.permission.RegisterPermissionsEvent;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.permissions.zone.RootZone;
 import nl.jk_5.pumpkin.server.permissions.zone.ServerZone;
@@ -50,7 +51,9 @@ public class PermissionsHandler implements PermissionRegistrar {
     }
 
     public void endRegistrations() {
-        Pumpkin.instance().postEvent(new RegisterPermissionsEvent(this));
+        RegisterPermissionsEvent event = PumpkinEventFactory.createRegisterPermissionsEvent(this);
+        Pumpkin.instance().postEvent(event);
+
         registering = false;
 
         rootZone.getPermissionsList().dump();
@@ -158,8 +161,8 @@ public class PermissionsHandler implements PermissionRegistrar {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void playerLogin(PlayerJoinServerEvent.Post e){
+    @EventHandler(order = Order.EARLY)
+    public void playerLogin(PlayerPostJoinServerEvent e){
         User user = e.getUser();
 
         if(user == null){

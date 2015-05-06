@@ -67,7 +67,7 @@ public class MapLoader {
         targetDir.mkdir();
         boolean success = false;
         try{
-            prepareMappack(mappack, targetDir);
+            //prepareMappack(mappack, targetDir); //TODO
             success = true;
         }catch(Exception e){
             logger.warn("Exception while preparing files for lobby mappack", e);
@@ -102,7 +102,7 @@ public class MapLoader {
                 dir.mkdir();
                 final Map map = new Map(mappack, dir);
                 try {
-                    prepareMappack(mappack, dir);
+                    //prepareMappack(mappack, dir); //TODO
                 } catch (Exception e) {
                     logger.warn("Exception while loading mappack", e);
                     return;
@@ -141,6 +141,10 @@ public class MapLoader {
             logger.info("Requesting " + file.getPath() + " (" + file.getFileId() + ")");
             HttpGet req = new HttpGet("https://pumpkin.jk-5.nl/api/file/" + file.getFileId());
             HttpResponse res = client.execute(req);
+            if(res.getStatusLine().getStatusCode() != 200){
+                logger.warn("Got non-ok response: " + res.getStatusLine().getStatusCode() + " " + res.getStatusLine().getReasonPhrase());
+                continue;
+            }
             InputStream content = null;
             FileOutputStream outStream = null;
             try{

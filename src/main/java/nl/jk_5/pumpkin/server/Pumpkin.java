@@ -4,11 +4,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.postgresql.Driver;
 
-import nl.jk_5.eventbus.Event;
-import nl.jk_5.eventbus.EventBus;
+import nl.jk_5.pumpkin.api.event.Event;
+import nl.jk_5.pumpkin.api.event.EventManager;
 import nl.jk_5.pumpkin.api.mappack.DimensionManager;
 import nl.jk_5.pumpkin.api.mappack.MappackRegistry;
 import nl.jk_5.pumpkin.api.user.UserManager;
+import nl.jk_5.pumpkin.server.event.PumpkinEventBus;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
 import nl.jk_5.pumpkin.server.multiworld.MapLoader;
 import nl.jk_5.pumpkin.server.permissions.PermissionsHandler;
@@ -35,7 +36,7 @@ public class Pumpkin {
     private static final Logger logger = LogManager.getLogger();
 
     private final MappackRegistry mappackRegistry = new SqlMappackRegistry();
-    private final EventBus eventBus = new EventBus();
+    private final EventManager eventManager = new PumpkinEventBus();
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final MapLoader mapLoader = new MapLoader();
     private final DimensionManagerImpl dimensionManager = new DimensionManagerImpl();
@@ -49,10 +50,10 @@ public class Pumpkin {
     public CountDownLatch consoleInitLatch = new CountDownLatch(1);
 
     public void load(){
-        eventBus.register(this.mapLoader);
-        eventBus.register(this.playerManager);
-        eventBus.register(WebEventHandler.instance());
-        eventBus.register(this.permissionsHandler);
+        eventManager.register(this.mapLoader);
+        eventManager.register(this.playerManager);
+        eventManager.register(WebEventHandler.instance());
+        eventManager.register(this.permissionsHandler);
 
         permissionsHandler.register("pumpkin.group.prefix", "");
     }
@@ -112,7 +113,7 @@ public class Pumpkin {
         return userManager;
     }
 
-    public <T extends Event> T postEvent(T event){
-        return eventBus.post(event);
+    public boolean postEvent(Event event){
+        return eventManager.post(event);
     }
 }

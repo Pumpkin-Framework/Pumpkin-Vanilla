@@ -29,6 +29,8 @@ public class SqlTableManager {
     private static Dao<DatabaseGamerule, Integer> gameruleDao;
     public static Dao<DatabaseGroup, Integer> groupsDao;
     private static Dao<DatabaseGroupMembership, Integer> userGroupDao;
+    private static Dao<DatabaseGame, Integer> gameDao;
+    private static Dao<DatabaseGameEvent, Integer> gameEventDao;
 
     public static void setupTables(){
         try{
@@ -46,6 +48,8 @@ public class SqlTableManager {
             gameruleDao = createTable(DatabaseGamerule.class);
             groupsDao = createTable(DatabaseGroup.class);
             userGroupDao = createTable(DatabaseGroupMembership.class);
+            gameDao = createTable(DatabaseGame.class);
+            gameEventDao = createTable(DatabaseGameEvent.class);
 
         }catch(SQLException e){
             e.printStackTrace();

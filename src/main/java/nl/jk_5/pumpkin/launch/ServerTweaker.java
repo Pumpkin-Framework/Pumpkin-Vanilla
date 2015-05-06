@@ -50,7 +50,6 @@ public class ServerTweaker implements ITweaker {
         loader.addClassLoaderExclusion("nl.jk_5.pumpkin.launch.console.");
 
         loader.registerTransformer("nl.jk_5.pumpkin.launch.transformer.MinecraftServerTransformer");
-        loader.registerTransformer("nl.jk_5.pumpkin.launch.transformer.EventSubscriptionTransformer");
 
         logger.info("Applying runtime deobfuscation...");
         isObfuscated = isObfuscated();
@@ -71,7 +70,6 @@ public class ServerTweaker implements ITweaker {
         MixinEnvironment env = MixinEnvironment.getDefaultEnvironment();
         env.setSide(MixinEnvironment.Side.SERVER);
         env.addConfiguration("mixins.pumpkin.core.json");
-        env.setSide(MixinEnvironment.Side.SERVER);
 
         logger.info("Initialization finished. Starting Minecraft server...");
     }
