@@ -28,13 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings("UnusedDeclaration")
-public class PumpkinCommandManager extends CommandHandler implements IAdminCommand {
-
-    //This method is used in MinecraftServerTransformer
-    @SuppressWarnings("UnusedDeclaration")
-    public static PumpkinCommandManager create(){
-        return new PumpkinCommandManager();
-    }
+public class PumpkinCommandManager extends ServerCommandManager {
 
     public PumpkinCommandManager() {
 

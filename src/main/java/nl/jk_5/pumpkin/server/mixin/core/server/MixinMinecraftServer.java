@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import net.minecraft.command.ICommandManager;
+import net.minecraft.command.ServerCommandManager;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.init.Bootstrap;
 import net.minecraft.network.NetworkSystem;
@@ -27,6 +28,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import nl.jk_5.pumpkin.server.Pumpkin;
+import nl.jk_5.pumpkin.server.command.PumpkinCommandManager;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
@@ -64,6 +66,11 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
     public MixinMinecraftServer(File workDir, Proxy proxy, File profileCacheDir) {
         super(workDir, proxy, profileCacheDir);
         this.worldServers = new WorldServer[0];
+    }
+
+    @Overwrite
+    protected ServerCommandManager createNewCommandManager(){
+        return new PumpkinCommandManager();
     }
 
     @Overwrite

@@ -49,8 +49,6 @@ public class ServerTweaker implements ITweaker {
         loader.addClassLoaderExclusion("org.fusesource.");
         loader.addClassLoaderExclusion("nl.jk_5.pumpkin.launch.console.");
 
-        loader.registerTransformer("nl.jk_5.pumpkin.launch.transformer.MinecraftServerTransformer");
-
         logger.info("Applying runtime deobfuscation...");
         isObfuscated = isObfuscated();
         if (isObfuscated) {
