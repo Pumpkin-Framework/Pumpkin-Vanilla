@@ -32,7 +32,7 @@ ext.minecraftPlugin = plugins.getPlugin('net.minecrell.vanilla')
 
 minecraft {
     version = '1.8'
-    mappings = 'snapshot_20150428'
+    mappings = 'snapshot_20150507'
     serverTweaker = 'nl.jk_5.pumpkin.launch.ServerTweaker'
 }
 

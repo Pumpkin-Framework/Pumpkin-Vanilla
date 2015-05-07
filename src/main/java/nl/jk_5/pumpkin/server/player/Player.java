@@ -9,7 +9,9 @@ import net.minecraft.util.IChatComponent;
 import net.minecraft.world.WorldSettings;
 
 import nl.jk_5.pumpkin.api.Gamemode;
+import nl.jk_5.pumpkin.api.net.PlayerConnection;
 import nl.jk_5.pumpkin.api.user.User;
+import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
@@ -121,5 +123,14 @@ public class Player {
 
     public Gamemode getGamemode(){
         return Gamemode.getById(getEntity().theItemInWorldManager.getGameType().getID());
+    }
+
+    @Nullable
+    public PlayerConnection getPlayerConnection(){
+        return ((PlayerConnection) this.netHandler);
+    }
+
+    public boolean hasPermission(String permission) {
+        return Pumpkin.instance().getPermissionsHandler().hasPermission(this, permission);
     }
 }

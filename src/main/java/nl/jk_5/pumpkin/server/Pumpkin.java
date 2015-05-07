@@ -56,6 +56,8 @@ public class Pumpkin {
         eventManager.register(this.permissionsHandler);
 
         permissionsHandler.register("pumpkin.group.prefix", "");
+        permissionsHandler.register("minecraft.commandblock.edit.block.*", "false");
+        permissionsHandler.register("minecraft.commandblock.edit.minecart.*", "false");
     }
 
     public void initialize(){

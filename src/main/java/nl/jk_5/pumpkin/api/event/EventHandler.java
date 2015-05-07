@@ -1,13 +1,18 @@
 package nl.jk_5.pumpkin.api.event;
 
 import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.TypeQualifierDefault;
 
 @Retention(value = RUNTIME)
 @Target(value = METHOD)
+@Nonnull
+@TypeQualifierDefault(PARAMETER)
 public @interface EventHandler {
 
     /**
