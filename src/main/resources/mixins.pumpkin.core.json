@@ -4,11 +4,10 @@
   "refmap": "mixins.pumpkin.refmap.json",
   "server": [
     "MixinBootstrap",
-    "entity.MixinCommandBlockLogic",
-    "entity.MixinEntity",
+    "command.MixinCommandExecuteAt",
+    "command.MixinCommandSender",
     "entity.player.MixinEntityPlayer",
     "entity.player.MixinEntityPlayerMP",
-    "rcon.MixinRconConsoleSource",
     "server.MixinMinecraftServer",
     "server.MixinNetworkManager",
     "server.MixinNetHandlerPlayServer",
