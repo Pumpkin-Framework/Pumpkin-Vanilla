@@ -48,7 +48,7 @@ public final class Main {
             throw new IOException("Failed to create folder at " + lib);
         }
 
-        File file = new File(MINECRAFT_SERVER_LOCAL);
+        File file = new File(lib, MINECRAFT_SERVER_LOCAL);
 
         if(!file.isFile() && !downloadVerified(MINECRAFT_SERVER_REMOTE, file)){
             return false;

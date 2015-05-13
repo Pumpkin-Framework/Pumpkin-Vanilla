@@ -91,6 +91,13 @@ compileJava.dependsOn copySrgs
 
 jar {
     from project.mixinRefMap
+
+    manifest {
+        attributes(
+                'Main-Class': 'nl.jk_5.pumpkin.launch.Main',
+                'Class-Path': 'lib/minecraft_server.1.8.jar lib/launchwrapper-1.11.jar'
+        )
+    }
 }
 
 reobf.doFirst {
