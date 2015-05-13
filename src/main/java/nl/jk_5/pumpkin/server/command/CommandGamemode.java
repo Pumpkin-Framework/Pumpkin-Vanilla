@@ -7,7 +7,8 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 
-import nl.jk_5.pumpkin.api.Gamemode;
+import nl.jk_5.pumpkin.api.gamemode.GameMode;
+import nl.jk_5.pumpkin.api.gamemode.GameModes;
 import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
@@ -26,21 +27,21 @@ class CommandGamemode extends BaseCommand {
         if(args.length == 0){
             Player player = requirePlayer(sender);
             if(player.getEntity().theItemInWorldManager.getGameType().isSurvivalOrAdventure()){
-                player.setGamemode(Gamemode.CREATIVE);
+                player.setGamemode(GameModes.CREATIVE);
             }else{
-                player.setGamemode(Gamemode.SURVIVAL);
+                player.setGamemode(GameModes.SURVIVAL);
             }
         }else if(args.length == 1){
             Player player = requirePlayer(sender);
-            Gamemode mode;
+            GameMode mode;
             if(args[0].equalsIgnoreCase("survival") || args[0].equalsIgnoreCase("s") || args[0].equals("0")){
-                mode = Gamemode.SURVIVAL;
+                mode = GameModes.SURVIVAL;
             }else if(args[0].equalsIgnoreCase("creative") || args[0].equalsIgnoreCase("c") || args[0].equals("1")){
-                mode = Gamemode.CREATIVE;
+                mode = GameModes.CREATIVE;
             }else if(args[0].equalsIgnoreCase("adventure") || args[0].equalsIgnoreCase("a") || args[0].equals("2")){
-                mode = Gamemode.ADVENTURE;
+                mode = GameModes.ADVENTURE;
             }else if(args[0].equalsIgnoreCase("spectator") || args[0].equals("3")){
-                mode = Gamemode.SPECTATOR;
+                mode = GameModes.SPECTATOR;
             }else{
                 throw new CommandException("Unknown gamemode: " + args[0]);
             }
@@ -48,15 +49,15 @@ class CommandGamemode extends BaseCommand {
             player.getEntity().fallDistance = 0;
         }else if(args.length == 2){
             List<Player> targets = selectPlayers(sender, args[1]);
-            Gamemode mode;
+            GameMode mode;
             if(args[0].equalsIgnoreCase("survival") || args[0].equalsIgnoreCase("s") || args[0].equals("0")){
-                mode = Gamemode.SURVIVAL;
+                mode = GameModes.SURVIVAL;
             }else if(args[0].equalsIgnoreCase("creative") || args[0].equalsIgnoreCase("c") || args[0].equals("1")){
-                mode = Gamemode.CREATIVE;
+                mode = GameModes.CREATIVE;
             }else if(args[0].equalsIgnoreCase("adventure") || args[0].equalsIgnoreCase("a") || args[0].equals("2")){
-                mode = Gamemode.ADVENTURE;
+                mode = GameModes.ADVENTURE;
             }else if(args[0].equalsIgnoreCase("spectator") || args[0].equals("3")){
-                mode = Gamemode.SPECTATOR;
+                mode = GameModes.SPECTATOR;
             }else{
                 throw new CommandException("Unknown gamemode: " + args[0]);
             }

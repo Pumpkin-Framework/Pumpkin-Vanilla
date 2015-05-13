@@ -10,8 +10,11 @@ import nl.jk_5.pumpkin.api.event.map.PlayerJoinMapEvent;
 import nl.jk_5.pumpkin.api.event.map.PlayerLeaveMapEvent;
 import nl.jk_5.pumpkin.api.event.permission.RegisterPermissionsEvent;
 import nl.jk_5.pumpkin.api.event.player.*;
+import nl.jk_5.pumpkin.api.event.server.StatusPingEvent;
 import nl.jk_5.pumpkin.api.event.world.PlayerJoinWorldEvent;
 import nl.jk_5.pumpkin.api.event.world.PlayerLeaveWorldEvent;
+import nl.jk_5.pumpkin.api.status.StatusClient;
+import nl.jk_5.pumpkin.api.text.Text;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.permissions.PermissionRegistrar;
@@ -82,7 +85,7 @@ public final class PumpkinEventFactory {
         return createEvent(PlayerLeaveWorldEvent.class, values);
     }
 
-    public static PlayerChatEvent createPlayerChatEvent(Player player, String originalMessage, IChatComponent message){
+    public static PlayerChatEvent createPlayerChatEvent(Player player, String originalMessage, Text message){
         java.util.Map<String, Object> values = Maps.newHashMapWithExpectedSize(4);
         values.put("player", player);
         values.put("originalMessage", originalMessage);
@@ -97,7 +100,7 @@ public final class PumpkinEventFactory {
         return createEvent(RegisterPermissionsEvent.class, values);
     }
 
-    public static PlayerPreJoinServerEvent createPlayerPreJoinServerEvent(Player player, InetSocketAddress address, IChatComponent joinMessage, Location spawnPoint, @Nullable Location location){
+    public static PlayerPreJoinServerEvent createPlayerPreJoinServerEvent(Player player, InetSocketAddress address, Text joinMessage, Location spawnPoint, @Nullable Location location){
         java.util.Map<String, Object> values = Maps.newHashMapWithExpectedSize(7);
         values.put("player", player);
         values.put("address", address);
@@ -138,5 +141,19 @@ public final class PumpkinEventFactory {
         values.put("player", player);
         values.put("user", player.getUser());
         return createEvent(PlayerPostRespawnEvent.class, values);
+    }
+
+    /**
+     * Creates a new {@link StatusPingEvent}.
+     *
+     * @param client The client that is pinging the server
+     * @param response The response to send to the client
+     * @return A new instance of the event
+     */
+    public static StatusPingEvent createStatusPing(StatusClient client, StatusPingEvent.Response response) {
+        java.util.Map<String, Object> values = Maps.newHashMapWithExpectedSize(2);
+        values.put("client", client);
+        values.put("response", response);
+        return createEvent(StatusPingEvent.class, values);
     }
 }

@@ -26,9 +26,14 @@ import nl.jk_5.pumpkin.api.event.PumpkinEventFactory;
 import nl.jk_5.pumpkin.api.event.player.PlayerChatEvent;
 import nl.jk_5.pumpkin.api.event.player.PlayerLeaveServerEvent;
 import nl.jk_5.pumpkin.api.net.PlayerConnection;
+import nl.jk_5.pumpkin.api.text.Text;
+import nl.jk_5.pumpkin.api.text.Texts;
+import nl.jk_5.pumpkin.api.text.action.TextActions;
+import nl.jk_5.pumpkin.api.text.format.TextColors;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mixin.interfaces.IMixinNetworkManager;
 import nl.jk_5.pumpkin.server.player.Player;
+import nl.jk_5.pumpkin.server.text.PumpkinTexts;
 
 import java.net.InetSocketAddress;
 
@@ -108,23 +113,20 @@ public abstract class MixinNetHandlerPlayServer implements PlayerConnection {
             if(msg.startsWith("/")){
                 MinecraftServer.getServer().getCommandManager().executeCommand(this.playerEntity, msg);
             }else{
-                IChatComponent comp = new ChatComponentText("");
-                IChatComponent name = this.playerEntity.getDisplayName();
-                name.getChatStyle().setColor(EnumChatFormatting.GRAY);
-                comp.appendSibling(name);
-                name = new ChatComponentText(": ");
-                name.getChatStyle().setColor(EnumChatFormatting.GRAY);
-                comp.appendSibling(name);
-                name = new ChatComponentText(msg);
-                name.getChatStyle().setColor(EnumChatFormatting.GRAY);
-                comp.appendSibling(name);
+                //TODO: name team color
+                Text name = Texts.of(playerEntity.getCommandSenderName()).builder()
+                        .onClick(TextActions.suggestCommand("/msg " + this.playerEntity.getCommandSenderName() + " "))
+                        .onHover(TextActions.showEntity(this.playerEntity, this.playerEntity.getCommandSenderName()))
+                        .onShiftClick(TextActions.insertText(this.playerEntity.getCommandSenderName()))
+                        .build();
+                Text text = Texts.of(TextColors.GRAY, name, ": ", msg);
 
                 Player player = Pumpkin.instance().getPlayerManager().getFromEntity(this.playerEntity);
-                PlayerChatEvent event = PumpkinEventFactory.createPlayerChatEvent(player, msg, comp);
+                PlayerChatEvent event = PumpkinEventFactory.createPlayerChatEvent(player, msg, text);
                 Pumpkin.instance().postEvent(event);
 
                 if(!event.isCancelled() && event.getMessage() != null){
-                    MinecraftServer.getServer().getConfigurationManager().sendChatMsgImpl(event.getMessage(), false);
+                    MinecraftServer.getServer().getConfigurationManager().sendChatMsgImpl(PumpkinTexts.toComponent(text), false);
                 }
             }
 

@@ -1,0 +1,12 @@
+{
+  "package": "nl.jk_5.pumpkin.server.mixin.api",
+  "refmap": "mixins.pumpkin.refmap.json",
+  "mixins": [
+    "text.MixinText",
+    "text.MixinTextLiteral",
+    "text.MixinTextScore",
+    "text.MixinTextSelector",
+    "text.MixinTextTranslatable",
+    "text.title.MixinTitle"
+  ]
+}

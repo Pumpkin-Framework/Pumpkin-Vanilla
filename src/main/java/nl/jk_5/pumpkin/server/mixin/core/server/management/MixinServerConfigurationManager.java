@@ -21,7 +21,10 @@ import net.minecraft.server.management.ItemInWorldManager;
 import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.server.management.ServerConfigurationManager;
 import net.minecraft.stats.StatisticsFile;
-import net.minecraft.util.*;
+import net.minecraft.util.BlockPos;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.WorldInfo;
@@ -33,12 +36,16 @@ import org.spongepowered.asm.mixin.Shadow;
 import nl.jk_5.pumpkin.api.event.PumpkinEventFactory;
 import nl.jk_5.pumpkin.api.event.player.PlayerPreJoinServerEvent;
 import nl.jk_5.pumpkin.api.event.player.PlayerPreRespawnEvent;
+import nl.jk_5.pumpkin.api.text.Text;
+import nl.jk_5.pumpkin.api.text.Texts;
+import nl.jk_5.pumpkin.api.text.format.TextColors;
 import nl.jk_5.pumpkin.api.user.User;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.multiworld.DelegatingWorldProvider;
 import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.storage.PlayerNbtManager;
+import nl.jk_5.pumpkin.server.text.PumpkinTexts;
 import nl.jk_5.pumpkin.server.util.location.Location;
 
 import java.net.InetSocketAddress;
@@ -58,7 +65,7 @@ public abstract class MixinServerConfigurationManager {
 
     //@Shadow public abstract NBTTagCompound readPlayerDataFromFile(EntityPlayerMP playerIn);
     @Shadow public abstract void setPlayerGameTypeBasedOnOther(EntityPlayerMP p_72381_1_, EntityPlayerMP p_72381_2_, World worldIn);
-    @Shadow public abstract void func_96456_a(ServerScoreboard scoreboardIn, EntityPlayerMP playerIn);
+    @Shadow public abstract void sendScoreboard(ServerScoreboard scoreboardIn, EntityPlayerMP playerIn);
     @Shadow public abstract int getMaxPlayers();
     @Shadow public abstract void sendChatMsg(IChatComponent component);
     @Shadow public abstract void playerLoggedIn(EntityPlayerMP playerIn);
@@ -121,19 +128,18 @@ public abstract class MixinServerConfigurationManager {
         Location worldSpawnPoint = previousWorld.getConfig().getSpawnpoint().setWorld(previousWorld);
         Location previousLocation = firstJoin ? null : Location.builder().setWorld(previousWorld).setX(player.posX).setY(player.posY).setZ(player.posZ).setYaw(player.rotationYaw).setPitch(player.rotationPitch).build();
 
-        IChatComponent joinMessage;
+        Text joinMessage;
         if(!player.getCommandSenderName().equalsIgnoreCase(oldUsername)) {
-            joinMessage = new ChatComponentTranslation("multiplayer.player.joined.renamed", player.getDisplayName(), oldUsername);
+            joinMessage = Texts.of(TextColors.YELLOW, Pumpkin.instance().getRegistry().getTranslationById("multiplayer.player.joined.renamed").get(), player.getDisplayName(), oldUsername);
         }else{
-            joinMessage = new ChatComponentTranslation("multiplayer.player.joined", player.getDisplayName());
+            joinMessage = Texts.of(TextColors.YELLOW, Pumpkin.instance().getRegistry().getTranslationById("multiplayer.player.joined").get(), player.getDisplayName());
         }
-        joinMessage.getChatStyle().setColor(EnumChatFormatting.YELLOW);
 
         PlayerPreJoinServerEvent event = PumpkinEventFactory.createPlayerPreJoinServerEvent(playerObj, ((InetSocketAddress) netManager.getRemoteAddress()), joinMessage, worldSpawnPoint, previousLocation);
         Pumpkin.instance().postEvent(event);
         if(event.getKickMessage() != null){
-            netManager.sendPacket(new S00PacketDisconnect(event.getKickMessage()));
-            netManager.closeChannel(event.getKickMessage());
+            netManager.sendPacket(new S00PacketDisconnect(PumpkinTexts.toComponent(event.getKickMessage(), playerObj.getLocale())));
+            netManager.closeChannel(PumpkinTexts.toComponent(event.getKickMessage(), playerObj.getLocale()));
             return;
         }
         Location spawnLocation = event.getLocation() == null ? event.getSpawnPoint() : event.getLocation();
@@ -249,14 +255,15 @@ public abstract class MixinServerConfigurationManager {
         player.getStatFile().sendAchievements(player);
 
         //Set scoreboard stuff
-        this.func_96456_a((ServerScoreboard) spawnWorld.getWrapped().getScoreboard(), player);
+        this.sendScoreboard((ServerScoreboard) spawnWorld.getWrapped().getScoreboard(), player);
 
         //Update the status list (in the multiplayer window)
         this.mcServer.refreshStatusNextTick();
 
         //Send join message
-        if(joinMessage != null){
-            this.sendChatMsg(joinMessage);
+        //TODO: nice broadcast api for this
+        for(Player p : Pumpkin.instance().getPlayerManager().getOnlinePlayers()){
+            p.sendMessage(joinMessage);
         }
 
         this.playerLoggedIn(player);

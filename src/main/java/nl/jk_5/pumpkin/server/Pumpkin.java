@@ -14,6 +14,7 @@ import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
 import nl.jk_5.pumpkin.server.multiworld.MapLoader;
 import nl.jk_5.pumpkin.server.permissions.PermissionsHandler;
 import nl.jk_5.pumpkin.server.player.PlayerManager;
+import nl.jk_5.pumpkin.server.registry.PumpkinGameRegistry;
 import nl.jk_5.pumpkin.server.sql.SqlMappackRegistry;
 import nl.jk_5.pumpkin.server.sql.SqlServiceImpl;
 import nl.jk_5.pumpkin.server.sql.SqlTableManager;
@@ -43,6 +44,7 @@ public class Pumpkin {
     private final PlayerManager playerManager = new PlayerManager();
     private final PermissionsHandler permissionsHandler = new PermissionsHandler();
     private final UserManager userManager = new SqlUserManager();
+    private final PumpkinGameRegistry gameRegistry = new PumpkinGameRegistry(); //TODO: interface
 
     private ServerConnection serverConnection;
     private SqlService sqlService = new SqlServiceImpl();
@@ -58,6 +60,8 @@ public class Pumpkin {
         permissionsHandler.register("pumpkin.group.prefix", "");
         permissionsHandler.register("minecraft.commandblock.edit.block.*", "false");
         permissionsHandler.register("minecraft.commandblock.edit.minecart.*", "false");
+
+        gameRegistry.preInit();
     }
 
     public void initialize(){
@@ -73,6 +77,8 @@ public class Pumpkin {
         SqlTableManager.setupTables();
 
         permissionsHandler.endRegistrations();
+
+        gameRegistry.init();
     }
 
     public static Pumpkin instance(){
@@ -113,6 +119,10 @@ public class Pumpkin {
 
     public UserManager getUserManager() {
         return userManager;
+    }
+
+    public PumpkinGameRegistry getRegistry() {
+        return gameRegistry;
     }
 
     public boolean postEvent(Event event){

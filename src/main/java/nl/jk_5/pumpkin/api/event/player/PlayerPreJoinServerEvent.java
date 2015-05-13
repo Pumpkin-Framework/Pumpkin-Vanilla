@@ -1,8 +1,6 @@
 package nl.jk_5.pumpkin.api.event.player;
 
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.IChatComponent;
-
+import nl.jk_5.pumpkin.api.text.Text;
 import nl.jk_5.pumpkin.server.util.location.Location;
 
 import java.net.InetSocketAddress;
@@ -13,14 +11,14 @@ public interface PlayerPreJoinServerEvent extends PlayerEvent {
     InetSocketAddress getAddress();
 
     @Nullable
-    ChatComponentText getKickMessage();
+    Text getKickMessage();
 
-    void setKickMessage(@Nullable ChatComponentText kickMessage);
+    void setKickMessage(@Nullable Text kickMessage);
 
     @Nullable
-    IChatComponent getJoinMessage();
+    Text getJoinMessage();
 
-    void setJoinMessage(@Nullable IChatComponent joinMessage);
+    void setJoinMessage(@Nullable Text joinMessage);
 
     Location getSpawnPoint();
 

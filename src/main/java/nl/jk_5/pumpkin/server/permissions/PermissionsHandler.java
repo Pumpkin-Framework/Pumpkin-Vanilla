@@ -1,8 +1,5 @@
 package nl.jk_5.pumpkin.server.permissions;
 
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IChatComponent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -12,6 +9,10 @@ import nl.jk_5.pumpkin.api.event.PumpkinEventFactory;
 import nl.jk_5.pumpkin.api.event.permission.RegisterPermissionsEvent;
 import nl.jk_5.pumpkin.api.event.player.PlayerChatEvent;
 import nl.jk_5.pumpkin.api.event.player.PlayerPostJoinServerEvent;
+import nl.jk_5.pumpkin.api.text.Text;
+import nl.jk_5.pumpkin.api.text.Texts;
+import nl.jk_5.pumpkin.api.text.action.TextActions;
+import nl.jk_5.pumpkin.api.text.format.TextColors;
 import nl.jk_5.pumpkin.api.user.User;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.Map;
@@ -175,19 +176,13 @@ public class PermissionsHandler implements PermissionRegistrar {
         String prefix = getPermission(e.getPlayer(), "pumpkin.group.prefix");
         if(prefix == null || prefix.isEmpty()) return;
 
-        IChatComponent comp = new ChatComponentText("");
-        comp.appendText(prefix);
-        comp.appendText(" ");
-        IChatComponent name = e.getPlayer().getEntity().getDisplayName();
-        name.getChatStyle().setColor(EnumChatFormatting.GRAY);
-        comp.appendSibling(name);
-        name = new ChatComponentText(": ");
-        name.getChatStyle().setColor(EnumChatFormatting.GRAY);
-        comp.appendSibling(name);
-        name = new ChatComponentText(e.getOriginalMessage());
-        name.getChatStyle().setColor(EnumChatFormatting.GRAY);
-        comp.appendSibling(name);
+        Text name = Texts.of(e.getPlayer().getName()).builder()
+                .onClick(TextActions.suggestCommand("/msg " + e.getPlayer().getName() + " "))
+                .onHover(TextActions.showEntity(e.getPlayer().getEntity(), e.getPlayer().getName()))
+                .onShiftClick(TextActions.insertText(e.getPlayer().getName()))
+                .build();
+        Text text = Texts.of(TextColors.GRAY, prefix, " ", name, ": ", e.getOriginalMessage());
 
-        e.setMessage(comp);
+        e.setMessage(text);
     }
 }

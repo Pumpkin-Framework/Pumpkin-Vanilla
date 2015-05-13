@@ -3,19 +3,23 @@ package nl.jk_5.pumpkin.server.player;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IChatComponent;
 import net.minecraft.world.WorldSettings;
+import org.apache.commons.lang3.LocaleUtils;
 
-import nl.jk_5.pumpkin.api.Gamemode;
+import nl.jk_5.pumpkin.api.gamemode.GameMode;
+import nl.jk_5.pumpkin.api.gamemode.GameModes;
 import nl.jk_5.pumpkin.api.net.PlayerConnection;
+import nl.jk_5.pumpkin.api.text.Text;
+import nl.jk_5.pumpkin.api.text.Texts;
+import nl.jk_5.pumpkin.api.text.format.TextColors;
 import nl.jk_5.pumpkin.api.user.User;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
+import nl.jk_5.pumpkin.server.text.PumpkinTexts;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
+import java.util.Locale;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -100,29 +104,37 @@ public class Player {
         return false; //TODO
     }
 
-    public void setGamemode(Gamemode gm){
-        getEntity().setGameType(WorldSettings.GameType.getByID(gm.getId()));
-        IChatComponent comp = null;
-        switch(getGamemode()){
-            case SURVIVAL:
-                comp = new ChatComponentText("Your game mode was changed to survival");
-                break;
-            case CREATIVE:
-                comp = new ChatComponentText("Your game mode was changed to creative");
-                break;
-            case ADVENTURE:
-                comp = new ChatComponentText("Your game mode was changed to adventure");
-                break;
-            case SPECTATOR:
-                comp = new ChatComponentText("Your game mode was changed to spectator");
-                break;
+    public void setGamemode(GameMode gm){
+        Text msg = null;
+        if(gm == GameModes.SURVIVAL){
+            msg = Texts.of(TextColors.GREEN, "Your game mode was changed to survival"); //TODO: translation
+            getEntity().setGameType(WorldSettings.GameType.SURVIVAL);
+        }else if(gm == GameModes.CREATIVE){
+            msg = Texts.of(TextColors.GREEN, "Your game mode was changed to creative"); //TODO: translation
+            getEntity().setGameType(WorldSettings.GameType.CREATIVE);
+        }else if(gm == GameModes.ADVENTURE){
+            msg = Texts.of(TextColors.GREEN, "Your game mode was changed to adventure"); //TODO: translation
+            getEntity().setGameType(WorldSettings.GameType.ADVENTURE);
+        }else if(gm == GameModes.SPECTATOR){
+            msg = Texts.of(TextColors.GREEN, "Your game mode was changed to spectator"); //TODO: translation
+            getEntity().setGameType(WorldSettings.GameType.SPECTATOR);
         }
-        comp.getChatStyle().setColor(EnumChatFormatting.GREEN);
-        getEntity().addChatMessage(comp);
+        this.sendMessage(msg);
     }
 
-    public Gamemode getGamemode(){
-        return Gamemode.getById(getEntity().theItemInWorldManager.getGameType().getID());
+    public GameMode getGamemode(){
+        WorldSettings.GameType type = getEntity().theItemInWorldManager.getGameType();
+        if(type == WorldSettings.GameType.SURVIVAL){
+            return GameModes.SURVIVAL;
+        }else if(type == WorldSettings.GameType.CREATIVE){
+            return GameModes.CREATIVE;
+        }else if(type == WorldSettings.GameType.ADVENTURE){
+            return GameModes.ADVENTURE;
+        }else if(type == WorldSettings.GameType.SPECTATOR){
+            return GameModes.SPECTATOR;
+        }else{
+            return GameModes.NOT_SET;
+        }
     }
 
     @Nullable
@@ -132,5 +144,13 @@ public class Player {
 
     public boolean hasPermission(String permission) {
         return Pumpkin.instance().getPermissionsHandler().hasPermission(this, permission);
+    }
+
+    public Locale getLocale(){
+        return LocaleUtils.toLocale(this.entity.translator);
+    }
+
+    public void sendMessage(Text message) {
+        this.entity.addChatMessage(PumpkinTexts.toComponent(message, this.getLocale()));
     }
 }

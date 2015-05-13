@@ -6,6 +6,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import nl.jk_5.pumpkin.api.event.EventHandler;
 import nl.jk_5.pumpkin.api.event.player.PlayerLeaveServerEvent;
 import nl.jk_5.pumpkin.api.event.player.PlayerPostJoinServerEvent;
+import nl.jk_5.pumpkin.api.event.server.StatusPingEvent;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 import java.util.*;
@@ -63,5 +64,10 @@ public class PlayerManager {
 
     public Collection<Player> getOnlinePlayers() {
         return this.onlinePlayers;
+    }
+
+    @EventHandler
+    public void onStatus(StatusPingEvent event){
+        System.out.println(event.getClient().getVirtualHost().orNull().getHostName());
     }
 }
