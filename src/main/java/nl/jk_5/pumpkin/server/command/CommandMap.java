@@ -1,16 +1,16 @@
 package nl.jk_5.pumpkin.server.command;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.command.WrongUsageException;
-import net.minecraft.event.ClickEvent;
-import net.minecraft.event.HoverEvent;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
 
+import nl.jk_5.pumpkin.api.command.CommandSender;
+import nl.jk_5.pumpkin.api.command.exception.CommandException;
+import nl.jk_5.pumpkin.api.command.exception.InvalidUsageException;
 import nl.jk_5.pumpkin.api.mappack.Mappack;
+import nl.jk_5.pumpkin.api.text.Text;
+import nl.jk_5.pumpkin.api.text.Texts;
+import nl.jk_5.pumpkin.api.text.action.TextActions;
+import nl.jk_5.pumpkin.api.text.format.TextColors;
+import nl.jk_5.pumpkin.api.text.format.TextStyles;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
@@ -23,17 +23,16 @@ class CommandMap extends BaseCommand {
     }
 
     @Override
-    public void execute(final ICommandSender sender, String[] args) throws CommandException {
-        if(args.length == 0) throw new WrongUsageException("/map <create:remove:list>");
+    public void execute(final CommandSender sender, String[] args) throws CommandException {
+        if(args.length == 0) throw new InvalidUsageException("/map <create:remove:list>");
         if(args[0].equalsIgnoreCase("create")){
-            if(args.length == 1) throw new WrongUsageException("/map create <mappack-id>");
-            int id = CommandBase.parseInt(args[1]);
+            if(args.length == 1) throw new InvalidUsageException("/map create <mappack-id>");
+            int id = parseInt(args[1]);
             Mappack mappack = Pumpkin.instance().getMappackRegistry().getById(id);
 
             if(mappack != null){
-                ChatComponentText component = new ChatComponentText("Loading " + mappack.getName());
-                component.getChatStyle().setColor(EnumChatFormatting.GREEN);
-                sender.addChatMessage(component);
+                Text msg = Texts.of(TextColors.GREEN, "Loading " + mappack.getName());
+                sender.sendMessage(msg);
 
                 final ListenableFuture<Map> future = Pumpkin.instance().getMapLoader().createMap(mappack);
                 future.addListener(new Runnable() {
@@ -42,14 +41,12 @@ class CommandMap extends BaseCommand {
                         Map map = getFutureResult(future);
                         if(map == null) return;
 
-                        ChatComponentText component = new ChatComponentText("Loaded ");
-                        component.getChatStyle().setColor(EnumChatFormatting.GREEN);
+                        Text namePart = Texts.of(TextColors.GRAY, TextStyles.UNDERLINE, map.getInternalName()).builder()
+                                .onClick(TextActions.runCommand("/goto " + map.getInternalName()))
+                                .onHover(TextActions.showText(Texts.of("Teleport to the map"))).build();
+                        Text msg = Texts.of(TextColors.GREEN, "Loaded ", namePart);
 
-                        ChatComponentText comp = new ChatComponentText(map.getInternalName());
-                        comp.getChatStyle().setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText("Teleport to the map")));
-                        comp.getChatStyle().setChatClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/goto " + map.getInternalName()));
-                        component.appendSibling(comp);
-                        sender.addChatMessage(component);
+                        sender.sendMessage(msg);
                     }
                 }, Pumpkin.instance().getExecutor());
             }else{

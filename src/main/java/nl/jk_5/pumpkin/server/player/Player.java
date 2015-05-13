@@ -3,20 +3,25 @@ package nl.jk_5.pumpkin.server.player;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.network.play.server.S02PacketChat;
 import net.minecraft.world.WorldSettings;
 import org.apache.commons.lang3.LocaleUtils;
 
+import nl.jk_5.pumpkin.api.command.CommandSender;
 import nl.jk_5.pumpkin.api.gamemode.GameMode;
 import nl.jk_5.pumpkin.api.gamemode.GameModes;
 import nl.jk_5.pumpkin.api.net.PlayerConnection;
 import nl.jk_5.pumpkin.api.text.Text;
 import nl.jk_5.pumpkin.api.text.Texts;
+import nl.jk_5.pumpkin.api.text.chat.ChatType;
+import nl.jk_5.pumpkin.api.text.chat.ChatTypes;
 import nl.jk_5.pumpkin.api.text.format.TextColors;
 import nl.jk_5.pumpkin.api.user.User;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.text.PumpkinTexts;
+import nl.jk_5.pumpkin.server.text.chat.PumpkinChatType;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 import java.util.Locale;
@@ -24,7 +29,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 @NonnullByDefault
-public class Player {
+public class Player implements CommandSender {
 
     private final UUID uuid;
 
@@ -150,7 +155,33 @@ public class Player {
         return LocaleUtils.toLocale(this.entity.translator);
     }
 
-    public void sendMessage(Text message) {
-        this.entity.addChatMessage(PumpkinTexts.toComponent(message, this.getLocale()));
+    @Override
+    public void sendMessage(Text... messages) {
+        sendMessage(ChatTypes.CHAT, messages);
+    }
+
+    @Override
+    public void sendMessage(Iterable<Text> messages) {
+        sendMessage(ChatTypes.CHAT, messages);
+    }
+
+    public void sendMessage(ChatType type, Text... messages) {
+        for (Text text : messages) {
+            if (type == ChatTypes.ACTION_BAR) {
+                text = PumpkinTexts.fixActionBarFormatting(text);
+            }
+
+            this.netHandler.sendPacket(new S02PacketChat(PumpkinTexts.toComponent(text, getLocale()), ((PumpkinChatType) type).getByteId()));
+        }
+    }
+
+    public void sendMessage(ChatType type, Iterable<Text> messages) {
+        for (Text text : messages) {
+            if (type == ChatTypes.ACTION_BAR) {
+                text = PumpkinTexts.fixActionBarFormatting(text);
+            }
+
+            this.netHandler.sendPacket(new S02PacketChat(PumpkinTexts.toComponent(text, getLocale()), ((PumpkinChatType) type).getByteId()));
+        }
     }
 }

@@ -27,11 +27,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import nl.jk_5.pumpkin.api.command.CommandSender;
+import nl.jk_5.pumpkin.api.text.Text;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.command.PumpkinCommandManager;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
+import nl.jk_5.pumpkin.server.text.PumpkinTexts;
 import nl.jk_5.pumpkin.server.util.ConsoleFormatter;
 import nl.jk_5.pumpkin.server.util.ShutdownThread;
 import nl.jk_5.pumpkin.server.util.location.Location;
@@ -43,7 +46,7 @@ import java.util.List;
 import java.util.concurrent.FutureTask;
 
 @Mixin(MinecraftServer.class)
-public abstract class MixinMinecraftServer extends MinecraftServer {
+public abstract class MixinMinecraftServer extends MinecraftServer implements CommandSender {
 
     @Shadow private static Logger logger;
     @Shadow private static MinecraftServer mcServer;
@@ -240,5 +243,24 @@ public abstract class MixinMinecraftServer extends MinecraftServer {
     @Overwrite
     public String getServerModName(){
         return "pumpkin";
+    }
+
+    @Override
+    public void sendMessage(Text... messages) {
+        for (Text message : messages) {
+            addChatMessage(PumpkinTexts.toComponent(message));
+        }
+    }
+
+    @Override
+    public void sendMessage(Iterable<Text> messages) {
+        for (Text message : messages) {
+            addChatMessage(PumpkinTexts.toComponent(message));
+        }
+    }
+
+    @Override
+    public String getName() {
+        return getCommandSenderName();
     }
 }

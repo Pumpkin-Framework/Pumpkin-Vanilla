@@ -1,8 +1,11 @@
 package nl.jk_5.pumpkin.server.command;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Doubles;
 import com.google.common.util.concurrent.ListenableFuture;
-import net.minecraft.command.*;
+import net.minecraft.command.ICommand;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.command.PlayerSelector;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.rcon.RConConsoleSource;
@@ -10,6 +13,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
 
+import nl.jk_5.pumpkin.api.command.CommandSender;
+import nl.jk_5.pumpkin.api.command.exception.*;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.Map;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
@@ -26,7 +31,7 @@ import javax.annotation.Nullable;
 
 @SuppressWarnings("unused")
 @NonnullByDefault
-abstract class BaseCommand extends ComparedCommand implements PermissionCommand {
+abstract class BaseCommand implements ICommand, PermissionCommand {
 
     private final String name;
     private final String[] aliases;
@@ -36,17 +41,17 @@ abstract class BaseCommand extends ComparedCommand implements PermissionCommand 
         this.aliases = aliases;
     }
 
-    public abstract void execute(ICommandSender sender, String[] args) throws CommandException;
+    public abstract void execute(CommandSender sender, String[] args) throws CommandException;
 
-    protected static MapWorld requireWorld(ICommandSender sender) throws CommandException {
+    protected static MapWorld requireWorld(CommandSender sender) throws CommandException {
         if(sender instanceof MinecraftServer || sender instanceof RConConsoleSource){
             throw new CommandException("You are not in a world");
         }
-        World world = sender.getEntityWorld();
+        World world = ((ICommandSender) sender).getEntityWorld();
         return Pumpkin.instance().getDimensionManager().getWorld(world.provider.getDimensionId());
     }
 
-    protected static Map requireMap(ICommandSender sender) throws CommandException {
+    protected static Map requireMap(CommandSender sender) throws CommandException {
         MapWorld world = requireWorld(sender);
         Map map = world.getMap();
         if(map == null){
@@ -55,13 +60,9 @@ abstract class BaseCommand extends ComparedCommand implements PermissionCommand 
         return map;
     }
 
-    protected static Player requirePlayer(ICommandSender sender) throws CommandException {
-        if(sender instanceof EntityPlayerMP){
-            Player player = Pumpkin.instance().getPlayerManager().getFromEntity((EntityPlayerMP) sender);
-            if(player == null){
-                throw new CommandException("You are not a player");
-            }
-            return player;
+    protected static Player requirePlayer(CommandSender sender) throws CommandException {
+        if(sender instanceof Player){
+            return (Player) sender;
         }else{
             throw new CommandException("You are not a player");
         }
@@ -103,8 +104,8 @@ abstract class BaseCommand extends ComparedCommand implements PermissionCommand 
         //return getOptions(args, );
     }
 
-    protected static Player selectPlayer(ICommandSender sender, String query) throws CommandException {
-        EntityPlayerMP player = PlayerSelector.matchOnePlayer(sender, query);
+    protected static Player selectPlayer(CommandSender sender, String query) throws CommandException {
+        EntityPlayerMP player = PlayerSelector.matchOnePlayer((ICommandSender) sender, query);
         if(player == null){
             player = MinecraftServer.getServer().getConfigurationManager().getPlayerByUsername(query);
         }
@@ -114,7 +115,7 @@ abstract class BaseCommand extends ComparedCommand implements PermissionCommand 
         return Pumpkin.instance().getPlayerManager().getFromEntity(player);
     }
 
-    protected static List<Player> selectPlayers(ICommandSender sender, String query) throws CommandException {
+    protected static List<Player> selectPlayers(CommandSender sender, String query) throws CommandException {
         List<EntityPlayerMP> players = select(sender, query, EntityPlayerMP.class);
         if(players.isEmpty()){
             EntityPlayerMP p = MinecraftServer.getServer().getConfigurationManager().getPlayerByUsername(query);
@@ -132,17 +133,17 @@ abstract class BaseCommand extends ComparedCommand implements PermissionCommand 
         }
     }
 
-    protected static <T extends Entity> List<T> select(ICommandSender sender, String query, Class<? extends T> target) throws CommandException {
+    protected static <T extends Entity> List<T> select(CommandSender sender, String query, Class<? extends T> target) throws CommandException {
         //TODO: check if sender has permission to use selectors
         @SuppressWarnings("unchecked")
-        List<T> out = PlayerSelector.matchEntities(sender, query, target);
+        List<T> out = PlayerSelector.matchEntities((ICommandSender) sender, query, target);
         if(out == null || out.isEmpty()){
             return Collections.emptyList();
         }
         return out;
     }
 
-    protected static double handleRelativeNumber(ICommandSender sender, double origin, String arg, int min, int max) throws CommandException {
+    protected static double handleRelativeNumber(CommandSender sender, double origin, String arg, int min, int max) throws CommandException {
         boolean isRelative = arg.startsWith("~");
         double value = isRelative ? origin : 0D;
         if(!isRelative || arg.length() > 1){
@@ -150,23 +151,23 @@ abstract class BaseCommand extends ComparedCommand implements PermissionCommand 
             if(isRelative){
                 arg = arg.substring(1);
             }
-            value += CommandBase.parseDouble(arg);
+            value += parseDouble(arg);
             if(!isDouble && !isRelative){
                 value += 0.5D;
             }
         }
         if(min != 0 || max != 0){
             if(value < min){
-                throw new NumberInvalidException("commands.generic.double.tooSmall", value, min);
+                throw new InvalidNumberException("commands.generic.double.tooSmall", value, min);
             }
             if(value > max){
-                throw new NumberInvalidException("commands.generic.double.tooBig", value, min);
+                throw new InvalidNumberException("commands.generic.double.tooBig", value, min);
             }
         }
         return value;
     }
 
-    protected static double handleRelativeNumber(ICommandSender sender, double origin, String arg) throws CommandException {
+    protected static double handleRelativeNumber(CommandSender sender, double origin, String arg) throws CommandException {
         return handleRelativeNumber(sender, origin, arg, -30000000, 30000000);
     }
 
@@ -179,8 +180,92 @@ abstract class BaseCommand extends ComparedCommand implements PermissionCommand 
         }
     }
 
+    protected static int parseInt(String input) throws InvalidNumberException {
+        try {
+            return Integer.parseInt(input);
+        }catch(NumberFormatException e) {
+            throw new InvalidNumberException("commands.generic.num.invalid", input);
+        }
+    }
+
+    protected static int parseInt(String input, int min) throws InvalidNumberException {
+        return parseInt(input, min, Integer.MAX_VALUE);
+    }
+
+    protected static int parseInt(String input, int min, int max) throws InvalidNumberException {
+        int number = parseInt(input);
+
+        if(number < min){
+            throw new InvalidNumberException("commands.generic.num.tooSmall", number, min);
+        }else if(number > max){
+            throw new InvalidNumberException("commands.generic.num.tooBig", number, max);
+        }else{
+            return number;
+        }
+    }
+
+    protected static long parseLong(String input) throws InvalidNumberException {
+        try {
+            return Long.parseLong(input);
+        }catch(NumberFormatException numberformatexception) {
+            throw new InvalidNumberException("commands.generic.num.invalid", input);
+        }
+    }
+
+    protected static long parseLong(String input, long min, long max) throws InvalidNumberException {
+        long number = parseLong(input);
+
+        if(number < min){
+            throw new InvalidNumberException("commands.generic.num.tooSmall", number, min);
+        }else if (number > max){
+            throw new InvalidNumberException("commands.generic.num.tooBig", number, max);
+        }else{
+            return number;
+        }
+    }
+
+    protected static double parseDouble(String input) throws InvalidNumberException {
+        try {
+            double number = Double.parseDouble(input);
+
+            if(!Doubles.isFinite(number)) {
+                throw new InvalidNumberException("commands.generic.num.invalid", input);
+            }else{
+                return number;
+            }
+        }catch(NumberFormatException numberformatexception){
+            throw new InvalidNumberException("commands.generic.num.invalid", input);
+        }
+    }
+
+    protected static double parseDouble(String input, double min) throws InvalidNumberException {
+        return parseDouble(input, min, Double.MAX_VALUE);
+    }
+
+    protected static double parseDouble(String input, double min, double max) throws InvalidNumberException {
+        double number = parseDouble(input);
+
+        if(number < min){
+            throw new InvalidNumberException("commands.generic.double.tooSmall", number, min);
+        }else if (number > max){
+            throw new InvalidNumberException("commands.generic.double.tooBig", number, max);
+        }else{
+            return number;
+        }
+    }
+
+    protected static boolean parseBoolean(String input) throws CommandException {
+        if(input.equals("true") || input.equals("1")){
+            return true;
+        }else if(input.equals("false") || input.equals("0")){
+            return false;
+        }else{
+            throw new CommandException("commands.generic.boolean.invalid", input);
+        }
+    }
+
     @Nullable
-    protected List<String> addAutocomplete(ICommandSender sender, String[] args){
+    protected List<String> addAutocomplete(CommandSender sender, String[] args){
         return null;
     }
 
@@ -191,7 +276,7 @@ abstract class BaseCommand extends ComparedCommand implements PermissionCommand 
 
     @Override
     @Nullable
-    public String getCommandUsage(ICommandSender sender) {
+    public final String getCommandUsage(ICommandSender sender) {
         return "/" + this.name;
     }
 
@@ -201,18 +286,32 @@ abstract class BaseCommand extends ComparedCommand implements PermissionCommand 
     }
 
     @Override
-    public final void processCommand(ICommandSender sender, String[] args) throws CommandException {
-        this.execute(sender, args);
+    public final void processCommand(ICommandSender sender, String[] args) throws net.minecraft.command.CommandException {
+        try {
+            this.execute((CommandSender) sender, args);
+        }catch(EntityNotFoundException e){
+            throw new net.minecraft.command.EntityNotFoundException(e.getMessage(), e.getFormatArgs());
+        }catch(InvalidNumberException e){
+            throw new net.minecraft.command.NumberInvalidException(e.getMessage(), e.getFormatArgs());
+        }catch(InvalidSyntaxException e){
+            throw new net.minecraft.command.SyntaxErrorException(e.getMessage(), e.getFormatArgs());
+        }catch(InvalidUsageException e){
+            throw new net.minecraft.command.WrongUsageException(e.getMessage(), e.getFormatArgs());
+        }catch(PlayerNotFoundException e){
+            throw new net.minecraft.command.PlayerNotFoundException(e.getMessage(), e.getFormatArgs());
+        }catch(CommandException e){
+            throw new net.minecraft.command.CommandException(e.getMessage(), e.getFormatArgs());
+        }
     }
 
     @Override
-    public boolean canCommandSenderUseCommand(ICommandSender sender) {
+    public final boolean canCommandSenderUseCommand(ICommandSender sender) {
         return true;
     }
 
     @Override
     public final List addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
-        List<String> completion = this.addAutocomplete(sender, args);
+        List<String> completion = this.addAutocomplete((CommandSender) sender, args);
         if(completion == null){
             return Collections.emptyList();
         }
@@ -237,5 +336,14 @@ abstract class BaseCommand extends ComparedCommand implements PermissionCommand 
 
     public final String getName() {
         return name;
+    }
+
+    @Override
+    public final int compareTo(@Nonnull Object o) {
+        return this.compareTo((ICommand) o);
+    }
+
+    public final int compareTo(ICommand command) {
+        return this.getCommandName().compareTo(command.getCommandName());
     }
 }

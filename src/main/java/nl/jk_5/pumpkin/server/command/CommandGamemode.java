@@ -1,14 +1,13 @@
 package nl.jk_5.pumpkin.server.command;
 
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.command.WrongUsageException;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IChatComponent;
-
+import nl.jk_5.pumpkin.api.command.CommandSender;
+import nl.jk_5.pumpkin.api.command.exception.CommandException;
+import nl.jk_5.pumpkin.api.command.exception.InvalidUsageException;
 import nl.jk_5.pumpkin.api.gamemode.GameMode;
 import nl.jk_5.pumpkin.api.gamemode.GameModes;
+import nl.jk_5.pumpkin.api.text.Text;
+import nl.jk_5.pumpkin.api.text.Texts;
+import nl.jk_5.pumpkin.api.text.format.TextColors;
 import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
@@ -23,7 +22,7 @@ class CommandGamemode extends BaseCommand {
     }
 
     @Override
-    public void execute(ICommandSender sender, String[] args) throws CommandException {
+    public void execute(CommandSender sender, String[] args) throws CommandException {
         if(args.length == 0){
             Player player = requirePlayer(sender);
             if(player.getEntity().theItemInWorldManager.getGameType().isSurvivalOrAdventure()){
@@ -67,17 +66,17 @@ class CommandGamemode extends BaseCommand {
                 target.getEntity().fallDistance = 0;
             }
 
-            IChatComponent comp = new ChatComponentText("Game mode of " + targets.size() + " players changed to creative");
-            comp.getChatStyle().setColor(EnumChatFormatting.GREEN);
-            sender.addChatMessage(comp);
+            //TODO: translation?
+            Text msg = Texts.of(TextColors.GREEN, "Game mode of " + targets.size() + " players changed to creative");
+            sender.sendMessage(msg);
         }else{
-            throw new WrongUsageException("/gamemode <mode> [player]");
+            throw new InvalidUsageException("/gamemode <mode> [player]");
         }
     }
 
     @Nullable
     @Override
-    protected List<String> addAutocomplete(ICommandSender sender, String[] args) {
+    protected List<String> addAutocomplete(CommandSender sender, String[] args) {
         if(args.length == 1){
             return getOptions(args, "survival", "creative", "adventure", "spectator");
         }else if(args.length == 2){

@@ -1,14 +1,13 @@
 package nl.jk_5.pumpkin.server.command;
 
 import com.google.common.base.Charsets;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.command.WrongUsageException;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IChatComponent;
 import org.mindrot.jbcrypt.BCrypt;
 
+import nl.jk_5.pumpkin.api.command.CommandSender;
+import nl.jk_5.pumpkin.api.command.exception.CommandException;
+import nl.jk_5.pumpkin.api.command.exception.InvalidUsageException;
+import nl.jk_5.pumpkin.api.text.Texts;
+import nl.jk_5.pumpkin.api.text.format.TextColors;
 import nl.jk_5.pumpkin.api.user.User;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.player.Player;
@@ -24,11 +23,11 @@ class CommandLogin extends BaseCommand {
     }
 
     @Override
-    public void execute(ICommandSender sender, String[] args) throws CommandException {
+    public void execute(CommandSender sender, String[] args) throws CommandException {
         Player player = requirePlayer(sender);
 
         if(args.length != 2){
-            throw new WrongUsageException("/login <username> <password>");
+            throw new InvalidUsageException("/login <username> <password>");
         }
         String username = args[0];
         String password = args[1];
@@ -49,9 +48,7 @@ class CommandLogin extends BaseCommand {
 
             Pumpkin.instance().getUserManager().updateMojangIds(user);
 
-            IChatComponent comp = new ChatComponentText("Hi, " + user.getUsername() + ". Your account is linked successfully");
-            comp.getChatStyle().setColor(EnumChatFormatting.GREEN);
-            sender.addChatMessage(comp);
+            player.sendMessage(Texts.of(TextColors.GREEN, "Hi, " + user.getUsername() + ". Your account is linked successfully"));
         }else{
             throw new CommandException("Wrong username/password");
         }
