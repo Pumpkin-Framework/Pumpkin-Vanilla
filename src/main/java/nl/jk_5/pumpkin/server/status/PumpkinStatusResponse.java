@@ -11,6 +11,7 @@ import nl.jk_5.pumpkin.api.event.server.StatusPingEvent;
 import nl.jk_5.pumpkin.api.status.StatusClient;
 import nl.jk_5.pumpkin.api.status.StatusResponse;
 import nl.jk_5.pumpkin.server.Pumpkin;
+import nl.jk_5.pumpkin.server.text.PumpkinTexts;
 
 import java.net.InetSocketAddress;
 import java.util.regex.Pattern;
@@ -74,7 +75,7 @@ public final class PumpkinStatusResponse {
     }
 
     public static String getMotd(ServerStatusResponse response) {
-        return "TODO: see PumpkinStatusResponse";//getFirstLine(SpongeTexts.toLegacy(response.getServerDescription()));
+        return getFirstLine(PumpkinTexts.toLegacy(response.getServerDescription()));
     }
 
     private static final Pattern STRIP_FORMATTING = Pattern.compile("§[0-9A-FK-OR]?", CASE_INSENSITIVE);

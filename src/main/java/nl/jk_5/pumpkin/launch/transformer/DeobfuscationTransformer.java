@@ -1,11 +1,15 @@
 package nl.jk_5.pumpkin.launch.transformer;
 
+import static com.google.common.io.Resources.readLines;
+
+import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Maps;
+import com.google.common.io.LineProcessor;
 import net.minecraft.launchwrapper.IClassNameTransformer;
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraft.launchwrapper.Launch;
@@ -18,17 +22,14 @@ import org.objectweb.asm.commons.RemappingMethodAdapter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 
-import java.io.BufferedReader;
+import nl.jk_5.pumpkin.launch.ServerTweaker;
+
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.zip.GZIPInputStream;
 
 public class DeobfuscationTransformer extends Remapper implements IClassTransformer, IClassNameTransformer {
 
@@ -45,33 +46,30 @@ public class DeobfuscationTransformer extends Remapper implements IClassTransfor
     private final Map<String, Map<String, String>> fieldDescriptions = new HashMap<String, Map<String, String>>();
 
     public DeobfuscationTransformer() throws Exception {
-        Path path = (Path) Launch.blackboard.get("pumpkin.deobf-srg");
-        String name = path.getFileName().toString();
-        boolean gzip = name.endsWith(".gz");
+        URL mappings = (URL) Launch.blackboard.get("pumpkin.mappings");
 
-        ImmutableBiMap.Builder<String, String> classes = ImmutableBiMap.builder();
-        ImmutableTable.Builder<String, String, String> fields = ImmutableTable.builder();
-        ImmutableTable.Builder<String, String, String> methods = ImmutableTable.builder();
+        final ImmutableBiMap.Builder<String, String> classes = ImmutableBiMap.builder();
+        final ImmutableTable.Builder<String, String, String> fields = ImmutableTable.builder();
+        final ImmutableTable.Builder<String, String, String> methods = ImmutableTable.builder();
 
-        BufferedReader reader = null;
-        try{
-            reader = new BufferedReader(new InputStreamReader(gzip ? new GZIPInputStream(Files.newInputStream(path)) : Files.newInputStream(path), StandardCharsets.UTF_8));
-            String line;
-            while ((line = reader.readLine()) != null) {
+        readLines(mappings, Charsets.UTF_8, new LineProcessor<Void>() {
+
+            @Override
+            public boolean processLine(String line) throws IOException {
                 if ((line = line.trim()).isEmpty()) {
-                    continue;
+                    return true;
                 }
 
                 String[] parts = StringUtils.split(line, ' ');
                 if (parts.length < 3) {
-                    System.out.println("Invalid line: " + line);
-                    continue;
+                    ServerTweaker.getLogger().warn("Invalid deobfuscation mapping line: {}", line);
+                    return true;
                 }
 
                 MappingType type = MappingType.of(parts[0]);
                 if (type == null) {
-                    System.out.println("Invalid mapping: " + line);
-                    continue;
+                    ServerTweaker.getLogger().warn("Invalid deobfuscation mapping type: {}", line);
+                    return true;
                 }
 
                 String[] source;
@@ -96,12 +94,15 @@ public class DeobfuscationTransformer extends Remapper implements IClassTransfor
                         break;
                     default:
                 }
+
+                return true;
             }
-        }finally{
-            if(reader != null){
-                reader.close();
+
+            @Override
+            public Void getResult() {
+                return null;
             }
-        }
+        });
 
         this.classes = classes.build();
         this.rawFields = fields.build();
@@ -239,13 +240,11 @@ public class DeobfuscationTransformer extends Remapper implements IClassTransfor
             return null;
         }
 
-        //System.out.println("\t> Deobfuscating " + name + " -> " + transformedName);
         ClassWriter writer = new ClassWriter(0);
         ClassReader reader = new ClassReader(bytes);
         reader.accept(new RemappingAdapter(writer), ClassReader.EXPAND_FRAMES);
         return writer.toByteArray();
     }
-
 
     @Override
     public String remapClassName(String typeName) {
@@ -333,7 +332,7 @@ public class DeobfuscationTransformer extends Remapper implements IClassTransfor
 
         private final String identifier;
 
-        private MappingType(String identifier) {
+        MappingType(String identifier) {
             this.identifier = identifier;
         }
 

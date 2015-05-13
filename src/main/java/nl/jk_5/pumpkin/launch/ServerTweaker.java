@@ -1,5 +1,7 @@
 package nl.jk_5.pumpkin.launch;
 
+import static com.google.common.io.Resources.getResource;
+
 import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
@@ -12,12 +14,16 @@ import nl.jk_5.pumpkin.launch.console.VanillaConsole;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.net.URL;
 import java.util.List;
 
 public class ServerTweaker implements ITweaker {
 
     private static final Logger logger = LogManager.getLogger();
+
+    public static Logger getLogger() {
+        return logger;
+    }
 
     public static boolean isObfuscated = false;
 
@@ -30,7 +36,7 @@ public class ServerTweaker implements ITweaker {
     }
 
     @Override
-    public void acceptOptions(List<String> list, File file, File file1, String s) {
+    public void acceptOptions(List<String> args, File gameDir, File assetsDir, String profile) {
         VanillaConsole.start();
     }
 
@@ -52,7 +58,8 @@ public class ServerTweaker implements ITweaker {
         logger.info("Applying runtime deobfuscation...");
         isObfuscated = isObfuscated();
         if (isObfuscated) {
-            Launch.blackboard.put("pumpkin.deobf-srg", Paths.get("bin", "deobf.srg.gz"));
+            logger.info("De-obfuscation mappings are provided by MCP (http://www.modcoderpack.com)");
+            Launch.blackboard.put("pumpkin.mappings", getResource("mappings.srg"));
             loader.registerTransformer("nl.jk_5.pumpkin.launch.transformer.DeobfuscationTransformer");
             logger.info("Runtime deobfuscation is applied.");
         } else {
@@ -60,7 +67,7 @@ public class ServerTweaker implements ITweaker {
         }
 
         logger.info("Applying access transformer...");
-        Launch.blackboard.put("pumpkin.at", "pumpkin_at.cfg");
+        Launch.blackboard.put("pumpkin.at", new URL[]{getResource("pumpkin_at.cfg")});
         loader.registerTransformer("nl.jk_5.pumpkin.launch.transformer.AccessTransformer");
 
         logger.info("Initializing Mixin environment...");

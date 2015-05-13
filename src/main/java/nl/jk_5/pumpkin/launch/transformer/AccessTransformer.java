@@ -1,23 +1,24 @@
 package nl.jk_5.pumpkin.launch.transformer;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.io.Resources.getResource;
+import static com.google.common.io.Resources.readLines;
 import static org.objectweb.asm.Opcodes.*;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.io.LineProcessor;
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraft.launchwrapper.Launch;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.*;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
 
@@ -28,67 +29,20 @@ public class AccessTransformer implements IClassTransformer {
     private final ImmutableMultimap<String, Modifier> modifiers;
 
     public AccessTransformer() throws IOException {
-        this((String) Launch.blackboard.get("pumpkin.at"));
+        this((URL[]) Launch.blackboard.get("pumpkin.at"));
     }
 
     protected AccessTransformer(String file) throws IOException {
-        checkNotNull(file, "file");
+        this(getResource(file));
+    }
 
-        ImmutableMultimap.Builder<String, Modifier> builder = ImmutableListMultimap.builder();
-
-        BufferedReader reader = null;
-        try{
-            reader = new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream(file), StandardCharsets.UTF_8));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                line = substringBefore(line, '#').trim();
-                if (line.isEmpty()) {
-                    continue;
-                }
-
-                List<String> parts = SEPARATOR.splitToList(line);
-                checkArgument(parts.size() <= 3, "Invalid access transformer config line: " + line);
-
-                String name = null;
-                String desc = null;
-
-                boolean isClass = parts.size() == 2;
-                if (!isClass) {
-                    name = parts.get(2);
-                    int pos = name.indexOf('(');
-                    if (pos >= 0) {
-                        desc = name.substring(pos);
-                        name = name.substring(0, pos);
-                    }
-                }
-
-                String s = parts.get(0);
-                int access = 0;
-                if (s.startsWith("public")) {
-                    access = ACC_PUBLIC;
-                } else if (s.startsWith("protected")) {
-                    access = ACC_PROTECTED;
-                } else if (s.startsWith("private")) {
-                    access = ACC_PRIVATE;
-                }
-
-                Boolean markFinal = null;
-                if (s.endsWith("+f")) {
-                    markFinal = true;
-                } else if (s.endsWith("-f")) {
-                    markFinal = false;
-                }
-
-                String className = parts.get(1).replace('/', '.');
-                builder.put(className, new Modifier(name, desc, isClass, access, markFinal));
-            }
-        }finally{
-            if(reader != null){
-                reader.close();
-            }
+    protected AccessTransformer(URL... files) throws IOException {
+        Processor processor = new Processor();
+        for (URL file : files) {
+            readLines(file, Charsets.UTF_8, processor);
         }
 
-        this.modifiers = builder.build();
+        this.modifiers = processor.build();
     }
 
     private static String substringBefore(String s, char c) {
@@ -131,7 +85,7 @@ public class AccessTransformer implements IClassTransformer {
                         // so that overridden methods will be called. Only need to scan this class, because obviously the method was private.
                         if (!methodNode.name.equals("<init>") && wasPrivate && (methodNode.access & ACC_PRIVATE) == 0) {
                             if (overridable == null) {
-                                overridable = new ArrayList<MethodNode>(3);
+                                overridable = Lists.newArrayListWithExpectedSize(3);
                             }
 
                             overridable.add(methodNode);
@@ -165,6 +119,66 @@ public class AccessTransformer implements IClassTransformer {
         ClassWriter writer = new ClassWriter(0);
         classNode.accept(writer);
         return writer.toByteArray();
+    }
+
+    private static class Processor implements LineProcessor<Void> {
+
+        private final ImmutableMultimap.Builder<String, Modifier> builder = ImmutableListMultimap.builder();
+
+        @Override
+        public boolean processLine(String line) throws IOException {
+            line = substringBefore(line, '#').trim();
+            if (line.isEmpty()) {
+                return true;
+            }
+
+            List<String> parts = SEPARATOR.splitToList(line);
+            checkArgument(parts.size() <= 3, "Invalid access transformer config line: " + line);
+
+            String name = null;
+            String desc = null;
+
+            boolean isClass = parts.size() == 2;
+            if (!isClass) {
+                name = parts.get(2);
+                int pos = name.indexOf('(');
+                if (pos >= 0) {
+                    desc = name.substring(pos);
+                    name = name.substring(0, pos);
+                }
+            }
+
+            String s = parts.get(0);
+            int access = 0;
+            if (s.startsWith("public")) {
+                access = ACC_PUBLIC;
+            } else if (s.startsWith("protected")) {
+                access = ACC_PROTECTED;
+            } else if (s.startsWith("private")) {
+                access = ACC_PRIVATE;
+            }
+
+            Boolean markFinal = null;
+            if (s.endsWith("+f")) {
+                markFinal = true;
+            } else if (s.endsWith("-f")) {
+                markFinal = false;
+            }
+
+            String className = parts.get(1).replace('/', '.');
+            this.builder.put(className, new Modifier(name, desc, isClass, access, markFinal));
+            return true;
+        }
+
+        @Override
+        public Void getResult() {
+            return null;
+        }
+
+        public ImmutableMultimap<String, Modifier> build() {
+            return this.builder.build();
+        }
+
     }
 
     private static class Modifier {

@@ -109,5 +109,8 @@ compileJava {
 }
 
 processResources {
-    rename("log4j2_prod.xml", "log4j2.xml")
+    rename "log4j2_prod.xml", "log4j2.xml"
+
+    from minecraftPlugin.delayedFile("{SRG_DIR}/notch-srg.srg")
+    rename "notch-srg.srg", "mappings.srg"
 }
