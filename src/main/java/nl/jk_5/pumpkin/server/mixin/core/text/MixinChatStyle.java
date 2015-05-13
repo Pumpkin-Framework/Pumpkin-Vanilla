@@ -72,5 +72,4 @@ public abstract class MixinChatStyle implements IMixinChatStyle {
             return i == buf.length ? buf : Arrays.copyOf(buf, i);
         }
     }
-
 }

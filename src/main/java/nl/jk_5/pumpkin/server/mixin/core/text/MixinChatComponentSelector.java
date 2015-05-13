@@ -17,5 +17,4 @@ public abstract class MixinChatComponentSelector extends MixinChatComponentStyle
     protected TextBuilder createBuilder() {
         return Texts.builder(Selectors.parse(this.selector));
     }
-
 }

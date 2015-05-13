@@ -6,12 +6,12 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
 import nl.jk_5.pumpkin.server.Pumpkin;
-import nl.jk_5.pumpkin.server.mixin.interfaces.IWorldProvider;
+import nl.jk_5.pumpkin.server.mixin.interfaces.IMixinWorldProvider;
 import nl.jk_5.pumpkin.server.multiworld.DelegatingWorldProvider;
 import nl.jk_5.pumpkin.server.multiworld.DimensionManagerImpl;
 
 @Mixin(WorldProvider.class)
-public abstract class MixinWorldProvider implements IWorldProvider {
+public abstract class MixinWorldProvider implements IMixinWorldProvider {
 
     @Shadow
     private int dimensionId;

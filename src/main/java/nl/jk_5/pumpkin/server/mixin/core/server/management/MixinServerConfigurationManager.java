@@ -6,8 +6,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.event.ClickEvent;
-import net.minecraft.event.HoverEvent;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.NetworkManager;
@@ -22,10 +20,6 @@ import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.server.management.ServerConfigurationManager;
 import net.minecraft.stats.StatisticsFile;
 import net.minecraft.util.BlockPos;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IChatComponent;
-import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.WorldInfo;
 import org.apache.logging.log4j.Logger;
@@ -36,9 +30,12 @@ import org.spongepowered.asm.mixin.Shadow;
 import nl.jk_5.pumpkin.api.event.PumpkinEventFactory;
 import nl.jk_5.pumpkin.api.event.player.PlayerPreJoinServerEvent;
 import nl.jk_5.pumpkin.api.event.player.PlayerPreRespawnEvent;
+import nl.jk_5.pumpkin.api.gamemode.GameModes;
 import nl.jk_5.pumpkin.api.text.Text;
 import nl.jk_5.pumpkin.api.text.Texts;
+import nl.jk_5.pumpkin.api.text.action.TextActions;
 import nl.jk_5.pumpkin.api.text.format.TextColors;
+import nl.jk_5.pumpkin.api.text.format.TextStyles;
 import nl.jk_5.pumpkin.api.user.User;
 import nl.jk_5.pumpkin.server.Pumpkin;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
@@ -47,6 +44,7 @@ import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.storage.PlayerNbtManager;
 import nl.jk_5.pumpkin.server.text.PumpkinTexts;
 import nl.jk_5.pumpkin.server.util.location.Location;
+import nl.jk_5.pumpkin.server.web.WebConstants;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -63,11 +61,8 @@ public abstract class MixinServerConfigurationManager {
     @Shadow private List<EntityPlayerMP> playerEntityList;
     @Shadow private Map<UUID, EntityPlayerMP> uuidToPlayerMap;
 
-    //@Shadow public abstract NBTTagCompound readPlayerDataFromFile(EntityPlayerMP playerIn);
-    @Shadow public abstract void setPlayerGameTypeBasedOnOther(EntityPlayerMP p_72381_1_, EntityPlayerMP p_72381_2_, World worldIn);
     @Shadow public abstract void sendScoreboard(ServerScoreboard scoreboardIn, EntityPlayerMP playerIn);
     @Shadow public abstract int getMaxPlayers();
-    @Shadow public abstract void sendChatMsg(IChatComponent component);
     @Shadow public abstract void playerLoggedIn(EntityPlayerMP playerIn);
     @Shadow public abstract void updateTimeAndWeatherForPlayer(EntityPlayerMP playerIn, WorldServer worldIn);
 
@@ -164,7 +159,13 @@ public abstract class MixinServerConfigurationManager {
 
         WorldInfo worldInfo = spawnWorld.getWrapped().getWorldInfo();
 
-        this.setPlayerGameTypeBasedOnOther(player, null, spawnWorld.getWrapped());
+        /////
+        if(playerObj.getGamemode() == GameModes.NOT_SET){
+            playerObj.setGamemode(GameModes.ADVENTURE);
+        }
+        //TODO: remove \/
+        //this.setPlayerGameTypeBasedOnOther(player, null, spawnWorld.getWrapped());
+        /////
 
         int dimid = (spawnWorld.getWrapped().provider instanceof DelegatingWorldProvider) ? ((DelegatingWorldProvider) spawnWorld.getWrapped().provider).getWrapped().getDimension().getId() : 0;
         NetHandlerPlayServer networkHandler = new NetHandlerPlayServer(this.mcServer, netManager, player);
@@ -179,71 +180,37 @@ public abstract class MixinServerConfigurationManager {
 
         User user = Pumpkin.instance().getUserManager().getByMojangId(playerObj.getUuid());
         if(user != null){
-            event.getPlayer().setUser(user);
+            playerObj.setUser(user);
 
-            IChatComponent comp = new ChatComponentText("Welcome back, " + user.getUsername());
-            comp.getChatStyle().setColor(EnumChatFormatting.GREEN);
-            event.getPlayer().getEntity().addChatMessage(comp);
+            playerObj.sendMessage(Texts.of(TextColors.GREEN, "Welcome back, " + user.getUsername()));
 
             S47PacketPlayerListHeaderFooter packet = new S47PacketPlayerListHeaderFooter();
-            packet.header = new ChatComponentText("Pumpkin");
-            packet.header.getChatStyle().setColor(EnumChatFormatting.AQUA);
-            packet.footer = new ChatComponentText("See your stats on ");
-            packet.footer.getChatStyle().setColor(EnumChatFormatting.AQUA);
-            IChatComponent comp2 = new ChatComponentText("https://pumpkin.jk-5.nl/#/user/" + user.getUsername());
-            comp2.getChatStyle().setColor(EnumChatFormatting.GOLD);
-            comp2.getChatStyle().setUnderlined(true);
-            packet.footer.appendSibling(comp2);
+            packet.header = PumpkinTexts.toComponent(Texts.of(TextColors.AQUA, "Pumpkin"), playerObj.getLocale());
+            packet.footer = PumpkinTexts.toComponent(Texts.of(TextColors.AQUA, "See your stats on ", TextColors.GOLD, TextStyles.UNDERLINE, "https://pumpkin.jk-5.nl/#/user/" + user.getUsername()), playerObj.getLocale());
 
             networkHandler.sendPacket(packet);
         }else{
-            IChatComponent comp = new ChatComponentText("Hello " + event.getPlayer().getName() + ". Welcome to pumpkin");
-            comp.getChatStyle().setColor(EnumChatFormatting.GOLD);
-            event.getPlayer().getEntity().addChatMessage(comp);
+            playerObj.sendMessage(Texts.of(TextColors.GOLD, "Hello " + event.getPlayer().getName() + ". Welcome to pumpkin"));
+            playerObj.sendMessage(Texts.of(TextColors.GOLD, "Your minecraft account is not linked to a pumpkin account"));
+            playerObj.sendMessage(Texts.of(TextColors.GOLD, "That means that we can not track your statistics"));
+            playerObj.sendMessage(Texts.of(TextColors.GOLD, "If you don't have a pumpkin account yet, go to"));
 
-            comp = new ChatComponentText("Your minecraft account is not linked to a pumpkin account");
-            comp.getChatStyle().setColor(EnumChatFormatting.GOLD);
-            event.getPlayer().getEntity().addChatMessage(comp);
+            Text link = Texts.of(TextColors.GREEN, TextStyles.UNDERLINE, "https://pumpkin.jk-5.nl/#/account/new").builder()
+                    .onClick(TextActions.openUrl(WebConstants.NEW_ACCOUNT_URL))
+                    .onHover(TextActions.showText(Texts.of("Click to go to the site"))).build();
 
-            comp = new ChatComponentText("That means that we can not track your statistics");
-            comp.getChatStyle().setColor(EnumChatFormatting.GOLD);
-            event.getPlayer().getEntity().addChatMessage(comp);
+            playerObj.sendMessage(Texts.of(link, TextColors.GOLD, " to create one"));
+            playerObj.sendMessage(Texts.of(TextColors.GOLD, "If you already have one, or when you are done registering, do"));
 
-            comp = new ChatComponentText("If you don't have a pumpkin account yet, go to");
-            comp.getChatStyle().setColor(EnumChatFormatting.GOLD);
-            event.getPlayer().getEntity().addChatMessage(comp);
+            Text loginCmd = Texts.of(TextColors.GREEN, "/login <username> <password>").builder()
+                    .onClick(TextActions.suggestCommand("/login "))
+                    .onHover(TextActions.showText(Texts.of("Click to log in"))).build();
 
-            comp = new ChatComponentText("");
-            IChatComponent c2 = new ChatComponentText("https://pumpkin.jk-5.nl/#/account/new");
-            c2.getChatStyle().setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText("Click to go to the site")));
-            c2.getChatStyle().setChatClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://pumpkin.jk-5.nl/#/account/new"));
-            c2.getChatStyle().setColor(EnumChatFormatting.GREEN);
-            c2.getChatStyle().setUnderlined(true);
-            comp.appendSibling(c2);
-            c2 = new ChatComponentText(" to create one");
-            c2.getChatStyle().setColor(EnumChatFormatting.GOLD);
-            comp.appendSibling(c2);
-            event.getPlayer().getEntity().addChatMessage(comp);
-
-            comp = new ChatComponentText("If you already have one, or when you are done registering, do");
-            comp.getChatStyle().setColor(EnumChatFormatting.GOLD);
-            event.getPlayer().getEntity().addChatMessage(comp);
-
-            comp = new ChatComponentText("/login <username> <password>");
-            comp.getChatStyle().setColor(EnumChatFormatting.GREEN);
-            comp.getChatStyle().setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText("Click to log in")));
-            comp.getChatStyle().setChatClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/login "));
-            event.getPlayer().getEntity().addChatMessage(comp);
+            playerObj.sendMessage(loginCmd);
 
             S47PacketPlayerListHeaderFooter packet = new S47PacketPlayerListHeaderFooter();
-            packet.header = new ChatComponentText("Pumpkin");
-            packet.header.getChatStyle().setColor(EnumChatFormatting.AQUA);
-            packet.footer = new ChatComponentText("Do /login or create an account on ");
-            packet.footer.getChatStyle().setColor(EnumChatFormatting.AQUA);
-            IChatComponent comp2 = new ChatComponentText("https://pumpkin.jk-5.nl/#/account/new");
-            comp2.getChatStyle().setColor(EnumChatFormatting.GOLD);
-            comp2.getChatStyle().setUnderlined(true);
-            packet.footer.appendSibling(comp2);
+            packet.header = PumpkinTexts.toComponent(Texts.of(TextColors.AQUA, "Pumpkin"), playerObj.getLocale());
+            packet.footer = PumpkinTexts.toComponent(Texts.of(TextColors.AQUA, "Do /login or create an account on ", TextColors.GOLD, TextStyles.UNDERLINE, "https://pumpkin.jk-5.nl/#/account/new" + user.getUsername()), playerObj.getLocale());
 
             networkHandler.sendPacket(packet);
         }
@@ -350,7 +317,10 @@ public abstract class MixinServerConfigurationManager {
         newPlayer.setEntityId(player.getEntityId());
         newPlayer.func_174817_o(player);
 
-        this.setPlayerGameTypeBasedOnOther(newPlayer, player, newWorld);
+        ////
+        newPlayer.setGameType(player.theItemInWorldManager.getGameType());
+        //this.setPlayerGameTypeBasedOnOther(newPlayer, player, newWorld);
+        ////
 
         if(bedObstructed){
             newPlayer.playerNetServerHandler.sendPacket(new S2BPacketChangeGameState(0, 0.0F));

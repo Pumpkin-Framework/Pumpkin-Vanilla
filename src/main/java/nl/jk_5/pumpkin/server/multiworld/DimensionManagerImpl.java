@@ -19,7 +19,7 @@ import nl.jk_5.pumpkin.api.mappack.DimensionManager;
 import nl.jk_5.pumpkin.api.mappack.WorldContext;
 import nl.jk_5.pumpkin.api.mappack.WorldProvider;
 import nl.jk_5.pumpkin.server.mappack.MapWorld;
-import nl.jk_5.pumpkin.server.mixin.interfaces.IWorldProvider;
+import nl.jk_5.pumpkin.server.mixin.interfaces.IMixinWorldProvider;
 import nl.jk_5.pumpkin.server.util.WorldInfoHelper;
 
 import java.util.ArrayList;
@@ -97,7 +97,7 @@ public final class DimensionManagerImpl implements DimensionManager {
             throw new RuntimeException("No WorldProvider bound for dimension " + dim);
         }
         DelegatingWorldProvider d = new DelegatingWorldProvider(this.customProviders.get(dim));
-        ((IWorldProvider) d).setDimensionId(dim);
+        ((IMixinWorldProvider) d).setDimensionId(dim);
         return d;
     }
 

@@ -86,5 +86,4 @@ public abstract class MixinHoverEvent implements IMixinHoverEvent {
         this.handle = checkNotNull(handle, "handle");
         this.initialized = true;
     }
-
 }

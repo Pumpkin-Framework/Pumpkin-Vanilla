@@ -229,6 +229,5 @@ public abstract class MixinNetHandlerPlayServer implements PlayerConnection {
                 ci.cancel();
             }
         }
-
     }
 }

@@ -13,5 +13,4 @@ public abstract class MixinChatStyleRoot extends ChatStyle implements IMixinChat
     public char[] asFormattingCode() {
         return ArrayUtils.EMPTY_CHAR_ARRAY;
     }
-
 }

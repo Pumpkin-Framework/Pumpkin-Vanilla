@@ -122,5 +122,4 @@ public abstract class MixinChatComponentStyle implements IMixinChatComponent {
 
         return builder.build();
     }
-
 }

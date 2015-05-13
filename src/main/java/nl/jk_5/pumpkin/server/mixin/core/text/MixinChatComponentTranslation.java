@@ -65,5 +65,4 @@ public abstract class MixinChatComponentTranslation extends MixinChatComponentSt
         }
         return ret;
     }
-
 }

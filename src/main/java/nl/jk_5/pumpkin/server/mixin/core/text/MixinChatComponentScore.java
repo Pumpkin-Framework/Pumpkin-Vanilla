@@ -13,5 +13,4 @@ public abstract class MixinChatComponentScore extends MixinChatComponentStyle {
     protected TextBuilder createBuilder() {
         return Texts.builder();
     }
-
 }

@@ -62,5 +62,4 @@ public abstract class MixinClickEvent implements IMixinClickEvent {
         this.handle = checkNotNull(handle, "handle");
         this.initialized = true;
     }
-
 }
