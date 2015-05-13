@@ -200,9 +200,7 @@ public abstract class MixinNetHandlerPlayServer implements PlayerConnection {
 
                     Player player = Pumpkin.instance().getPlayerManager().getFromEntity(this.playerEntity);
                     if(permissionCheck == null || !player.hasPermission(permissionCheck)){
-                        IChatComponent comp = new ChatComponentText("You do not have permission to edit this command block!");
-                        comp.getChatStyle().setColor(EnumChatFormatting.RED);
-                        player.getEntity().addChatMessage(comp);
+                        player.sendMessage(Texts.of(TextColors.RED, "You do not have permission to edit this command block!"));
                         return;
                     }
 
