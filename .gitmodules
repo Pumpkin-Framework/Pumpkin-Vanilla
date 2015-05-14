@@ -1,0 +1,4 @@
+[submodule "jnlua"]
+	path = jnlua
+	url = https://github.com/Pumpkin-Framework/jnlua.git
+	branch = pumpkin
