@@ -2,6 +2,9 @@ package nl.jk_5.pumpkin.server.lua;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Iterators;
+import com.naef.jnlua.LuaState;
+
+import nl.jk_5.pumpkin.server.lua.architecture.luac.LuaStateUtils;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -12,6 +15,10 @@ public class ArgumentsImpl implements Arguments {
 
     public ArgumentsImpl(Object[] args) {
         this.args = args;
+    }
+
+    public static ArgumentsImpl of(LuaState lua) {
+        return new ArgumentsImpl(LuaStateUtils.toSimpleJavaObjects(lua, 1));
     }
 
     @Override

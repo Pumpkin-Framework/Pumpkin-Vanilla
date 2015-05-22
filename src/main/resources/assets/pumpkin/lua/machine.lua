@@ -704,6 +704,7 @@ sandbox = {
     return table.unpack(result, 1, result.n)
   end,
   print = print,
+  map = map,
   rawequal = rawequal,
   rawget = rawget,
   rawlen = rawlen,
@@ -1190,12 +1191,11 @@ local function main()
 
     debug.sethook(co, checkDeadline, "", hookInterval)
     local result = table.pack(coroutine.resume(co, table.unpack(args, 1, args.n)))
-    args = nil -- clear upvalue, avoids trying to persist it
     if not result[1] then
       error(tostring(result[2]), 0)
     elseif coroutine.status(co) == "dead" then
       -- TODO: at this point, the script is finished. Handle it
-      --error("computer halted", 0)
+      error("computer halted", 0)
     else
       args = table.pack(coroutine.yield(result[2])) -- system yielded value
       args = wrapUserdata(args)

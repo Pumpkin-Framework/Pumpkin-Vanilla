@@ -11,6 +11,7 @@ public class LuaVmSettings {
     public final long executionDelay;
     public final boolean allowBytecode;
     public final double timeout;
+    public final boolean logCallbackErrors;
 
     public LuaVmSettings(Config config) {
         disableMemoryLimit = config.getBoolean("disableMemoryLimit");
@@ -20,5 +21,6 @@ public class LuaVmSettings {
         executionDelay = config.getLong("executionDelay");
         allowBytecode = config.getBoolean("allowBytecode");
         timeout = config.getDouble("timeout");
+        logCallbackErrors = config.getBoolean("logCallbackErrors");
     }
 }

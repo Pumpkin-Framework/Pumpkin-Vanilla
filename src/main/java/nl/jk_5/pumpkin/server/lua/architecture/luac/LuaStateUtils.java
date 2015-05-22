@@ -1,10 +1,11 @@
 package nl.jk_5.pumpkin.server.lua.architecture.luac;
 
+import com.naef.jnlua.JavaFunction;
 import com.naef.jnlua.LuaState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.jk_5.pumpkin.server.lua.Value;
+import nl.jk_5.pumpkin.server.lua.*;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
 
 import java.util.*;
@@ -18,11 +19,11 @@ public final class LuaStateUtils {
     private LuaStateUtils() {
     }
 
-    public static void pushValue(LuaState state, @Nullable Object value){
-        pushValue(state, value, new IdentityHashMap<Object, Integer>());
+    public static void pushValue(LuaState state, @Nullable Object value, Context ctx){
+        pushValue(state, value, new IdentityHashMap<Object, Integer>(), ctx);
     }
 
-    private static void pushValue(LuaState lua, @Nullable Object value, IdentityHashMap<Object, Integer> memo){
+    private static void pushValue(LuaState lua, @Nullable final Object value, final IdentityHashMap<Object, Integer> memo, final Context ctx){
         boolean recursive = memo.size() > 0;
         int oldTop = lua.getTop();
         if(memo.containsKey(value)){
@@ -51,13 +52,40 @@ public final class LuaStateUtils {
             }else if(value instanceof byte[]){
                 lua.pushByteArray((byte[]) value);
             }else if(value instanceof Object[]){
-                pushList(lua, Arrays.asList(((Object[]) value)), memo);
+                pushList(lua, Arrays.asList(((Object[]) value)), memo, ctx);
             }else if(value instanceof Value){
                 lua.pushJavaObjectRaw(value);
             }else if(value instanceof List<?>){
-                pushList(lua, ((List<?>) value), memo);
+                pushList(lua, ((List<?>) value), memo, ctx);
             }else if(value instanceof Map<?, ?>){
-                pushTable(lua, ((Map<?, ?>) value), memo);
+                pushTable(lua, ((Map<?, ?>) value), memo, ctx);
+            }else if(value instanceof JavaFunction){
+                lua.pushJavaFunction(((JavaFunction) value));
+            }else if(value instanceof CallbackContainer){
+                Map<String, Callbacks.Callback> cb = Callbacks.search(value);
+                //Map<String, JavaFunction> ret = new HashMap<String, JavaFunction>(cb.size());
+                lua.newTable();
+                for(final Map.Entry<String, Callbacks.Callback> e : cb.entrySet()){
+                    lua.pushJavaFunction(new JavaFunction() {
+                        @Override
+                        public int invoke(LuaState luaState) {
+                            try{
+                                Arguments args = ArgumentsImpl.of(luaState);
+                                Object[] ret = e.getValue().apply(value, ctx, args);
+                                for (Object o : ret) {
+                                    LuaStateUtils.pushValue(luaState, o, ctx);
+                                }
+                                return ret.length;
+                            }catch(Exception e){
+                                //TODO: propagate the exception to lua
+                                logger.warn("Exception while invoking callback: ", e);
+                                return 0;
+                            }
+                        }
+                    });
+                    lua.setField(-2, e.getKey());
+                }
+                //pushTable(lua, ret, memo, ctx);
             }else{
                 logger.warn("Tried to push an unsupported value of type " + value.getClass().getName() + " to lua");
                 lua.pushNil();
@@ -71,13 +99,13 @@ public final class LuaStateUtils {
         }
     }
 
-    public static void pushList(LuaState lua, List<?> list, IdentityHashMap<Object, Integer> memo){
+    public static void pushList(LuaState lua, List<?> list, IdentityHashMap<Object, Integer> memo, Context ctx){
         lua.newTable();
         int tableIndex = lua.getTop();
         memo.put(list, tableIndex);
         int count = 0;
         for(int i = 0; i < list.size(); i++){
-            pushValue(lua, list.get(i), memo);
+            pushValue(lua, list.get(i), memo, ctx);
             lua.rawSet(tableIndex, i + 1);
             count ++;
         }
@@ -88,15 +116,19 @@ public final class LuaStateUtils {
         lua.rawSet(-3);
     }
 
-    public static void pushTable(LuaState lua, Map<?, ?> map, IdentityHashMap<Object, Integer> memo){
+    public static void pushTable(LuaState lua, Map<?, ?> map, Context ctx){
+        pushTable(lua, map, new IdentityHashMap<Object, Integer>(), ctx);
+    }
+
+    public static void pushTable(LuaState lua, Map<?, ?> map, IdentityHashMap<Object, Integer> memo, Context ctx){
         lua.newTable(0, map.size());
         int tableIndex = lua.getTop();
         memo.put(map, tableIndex);
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             if(entry.getKey() != null){
-                pushValue(lua, entry.getKey(), memo);
+                pushValue(lua, entry.getKey(), memo, ctx);
                 int keyIndex = lua.getTop();
-                pushValue(lua, entry.getValue(), memo);
+                pushValue(lua, entry.getValue(), memo, ctx);
                 // Bring key to front, in case of memo from value push.
                 // Cannot actually move because that might shift memo info.
                 lua.pushValue(keyIndex);

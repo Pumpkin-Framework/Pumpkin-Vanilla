@@ -6,13 +6,17 @@ import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 
 import nl.jk_5.pumpkin.api.mappack.*;
+import nl.jk_5.pumpkin.server.lua.Arguments;
+import nl.jk_5.pumpkin.server.lua.Callback;
+import nl.jk_5.pumpkin.server.lua.CallbackContainer;
+import nl.jk_5.pumpkin.server.lua.Context;
 
 import java.util.Collection;
 import java.util.Date;
 
 @DatabaseTable(tableName = "mappacks")
 @SuppressWarnings("unused")
-public class DatabaseMappack implements Mappack {
+public class DatabaseMappack implements Mappack, CallbackContainer {
 
     @DatabaseField(generatedId = true)
     private int id;
@@ -103,5 +107,16 @@ public class DatabaseMappack implements Mappack {
 
     public Collection<DatabaseMappackTeam> getTeams() {
         return teams;
+    }
+
+    @Callback(doc = "function():number -- Returns the id of this mappack")
+    public Object[] id(Context context, Arguments arguments){
+        return new Object[]{this.id};
+    }
+
+    @Callback(doc = "function():number -- Returns the id of this mappack")
+    public Object[] yeah(Context context, Arguments arguments){
+        System.out.println("IT WORKS. FUCK YES");
+        return new Object[]{};
     }
 }

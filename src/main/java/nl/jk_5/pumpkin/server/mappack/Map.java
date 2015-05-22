@@ -4,8 +4,7 @@ import net.minecraft.stats.StatisticsFile;
 
 import nl.jk_5.pumpkin.api.mappack.Mappack;
 import nl.jk_5.pumpkin.server.Pumpkin;
-import nl.jk_5.pumpkin.server.lua.Machine;
-import nl.jk_5.pumpkin.server.lua.MachineHost;
+import nl.jk_5.pumpkin.server.lua.*;
 import nl.jk_5.pumpkin.server.lua.map.MachineImpl;
 import nl.jk_5.pumpkin.server.permissions.MapPermissionsHandler;
 import nl.jk_5.pumpkin.server.player.Player;
@@ -17,7 +16,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 @NonnullByDefault
-public class Map implements MachineHost {
+public class Map implements MachineHost, CallbackContainer {
 
     private final Mappack mappack;
     private final File dir;
@@ -78,10 +77,13 @@ public class Map implements MachineHost {
 
     @Override
     public String getScript() {
-        return "print \"it werks\"";
+        return "local id = map.mappack().id()\nprint(tostring(id))";
     }
 
-
+    @Callback(doc = "function():Mappack -- Returns the mappack loaded in this map.")
+    public Object[] mappack(Context context, Arguments args){
+        return new Object[]{mappack};
+    }
 
     public String getInternalName() {
         return internalName;

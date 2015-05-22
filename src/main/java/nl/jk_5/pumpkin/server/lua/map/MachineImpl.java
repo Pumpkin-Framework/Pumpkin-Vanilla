@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nonnull;
 
-public class MachineImpl implements Machine, Runnable {
+public class MachineImpl implements Machine, Runnable, CallbackContainer {
 
     private static final Logger logger = LogManager.getLogger();
     private static final ScheduledExecutorService threadPool = Executors.newScheduledThreadPool(Settings.lua.threads, new ThreadFactory() {
@@ -298,7 +298,7 @@ public class MachineImpl implements Machine, Runnable {
         if(direct && architecture.isInitialized()){
             checkLimit(cb.getAnnotation().limit());
         }
-        return Registry.convert(cb.apply(value, this, new ArgumentsImpl(args)));
+        return Registry.convert(this, cb.apply(value, this, new ArgumentsImpl(args)));
     }
 
     @Override
@@ -667,8 +667,8 @@ public class MachineImpl implements Machine, Runnable {
             return new Object[0];
         }
 
-        public SimpleSignal convert(){
-            return new SimpleSignal(name, Registry.convert(args));
+        public SimpleSignal convert(){                   //TODO
+            return new SimpleSignal(name, Registry.convert(null, args));
         }
     }
 }

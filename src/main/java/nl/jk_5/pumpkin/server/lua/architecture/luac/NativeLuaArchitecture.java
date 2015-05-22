@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.jk_5.pumpkin.server.lua.LimitReachedException;
 import nl.jk_5.pumpkin.server.lua.LuaStateFactory;
 import nl.jk_5.pumpkin.server.lua.Machine;
 import nl.jk_5.pumpkin.server.lua.Signal;
@@ -36,8 +37,19 @@ public class NativeLuaArchitecture implements Architecture {
                 new ComputerApi(this),
                 new BiosApi(this),
                 new UnicodeApi(this),
+                new MapApi(this),
                 new SystemApi(this)
         );
+    }
+
+    public int handle(LuaState s, Throwable t){
+        if(Settings.lua.logCallbackErrors && !(t instanceof LimitReachedException)){
+            logger.warn("Exception in Lua callback", t);
+        }
+        if(t instanceof LimitReachedException){
+            return 0;
+        }
+        return -1;
     }
 
     @Override
@@ -99,7 +111,7 @@ public class NativeLuaArchitecture implements Architecture {
                     if(signal != null){
                         lua.pushString(signal.getName());
                         for(Object arg : signal.getArgs()){
-                            LuaStateUtils.pushValue(lua, arg);
+                            LuaStateUtils.pushValue(lua, arg, getMachine());
                         }
                         results = lua.resume(1, 1 + signal.getArgs().length);
                     }else{

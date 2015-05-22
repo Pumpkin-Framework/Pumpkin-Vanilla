@@ -45,7 +45,7 @@ public class OSApi extends NativeLuaApi {
                 if(lua.getTop() > 1 && lua.isNumber(2)){
                     time = lua.toNumber(2) * 1000 / 60 / 60;
                 }else{
-                    time = getMachine().worldTime() + 5000;
+                    time = /*getMachine().worldTime()*/ 0 + 5000; //TODO
                 }
 
                 GameTimeFormatter.DateTime dt = GameTimeFormatter.parse(time);
@@ -88,7 +88,7 @@ public class OSApi extends NativeLuaApi {
                     // starts days at 6 o'clock, versus the 1 o'clock of timestamps so we
                     // add those five hours. Thus:
                     // timestamp = (time + 5000) * 60[kh] * 60[km] / 1000[s]
-                    lua.pushNumber((getMachine().worldTime() + 5000) * 60 * 60 / 1000);
+                    lua.pushNumber((/*getMachine().worldTime()*/ 0 + 5000) * 60 * 60 / 1000); //TODO
                 }else{
                     lua.checkType(1, LuaType.TABLE);
                     lua.setTop(1);
