@@ -32,6 +32,9 @@ apply plugin: 'net.minecrell.vanilla'
 
 ext.minecraftPlugin = plugins.getPlugin('net.minecrell.vanilla')
 
+group = "nl.jk-5.pumpkin"
+version = "1.0.0-SNAPSHOT"
+
 minecraft {
     version = '1.8'
     mappings = 'snapshot_20150513'
@@ -69,6 +72,8 @@ dependencies {
 
     compile 'jline:jline:2.12.1'
     compile 'de.svenkubiak:jBCrypt:0.4'
+
+    compile project(":jnlua")
 
     testCompile 'junit:junit:4.12'
 }

@@ -4,6 +4,9 @@ import net.minecraft.stats.StatisticsFile;
 
 import nl.jk_5.pumpkin.api.mappack.Mappack;
 import nl.jk_5.pumpkin.server.Pumpkin;
+import nl.jk_5.pumpkin.server.lua.Machine;
+import nl.jk_5.pumpkin.server.lua.MachineHost;
+import nl.jk_5.pumpkin.server.lua.map.MachineImpl;
 import nl.jk_5.pumpkin.server.permissions.MapPermissionsHandler;
 import nl.jk_5.pumpkin.server.player.Player;
 import nl.jk_5.pumpkin.server.util.annotation.NonnullByDefault;
@@ -14,15 +17,18 @@ import java.util.HashMap;
 import java.util.UUID;
 
 @NonnullByDefault
-public class Map {
+public class Map implements MachineHost {
 
     private final Mappack mappack;
     private final File dir;
     private final String internalName;
+    private final MachineImpl machine;
 
     private final MapPermissionsHandler permissionsHandler = new MapPermissionsHandler(this);
 
     private final java.util.Map<UUID, StatisticsFile> playerStats = new HashMap<UUID, StatisticsFile>();
+
+    private boolean firstTick = true;
 
     private MapWorld defaultWorld;
 
@@ -30,6 +36,16 @@ public class Map {
         this.mappack = mappack;
         this.dir = dir;
         this.internalName = dir.getName();
+
+        this.machine = new MachineImpl(this);
+    }
+
+    public void tick() {
+        if(firstTick){
+            machine.start();
+            firstTick = false;
+        }
+        machine.update();
     }
 
     public MapWorld getPrimaryWorld(){
@@ -53,6 +69,16 @@ public class Map {
 
     public void onPlayerLeft(Player player) {
 
+    }
+
+    @Override
+    public Machine getMachine() {
+        return machine;
+    }
+
+    @Override
+    public String getScript() {
+        return "print \"it werks\"";
     }
 
 

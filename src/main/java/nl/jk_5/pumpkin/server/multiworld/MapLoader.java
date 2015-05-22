@@ -67,7 +67,7 @@ public class MapLoader {
         targetDir.mkdir();
         boolean success = false;
         try{
-            prepareMappack(mappack, targetDir); //TODO
+            //prepareMappack(mappack, targetDir); //TODO
             success = true;
         }catch(Exception e){
             logger.warn("Exception while preparing files for lobby mappack", e);
@@ -102,7 +102,7 @@ public class MapLoader {
                 dir.mkdir();
                 final Map map = new Map(mappack, dir);
                 try {
-                    prepareMappack(mappack, dir); //TODO
+                    //prepareMappack(mappack, dir); //TODO
                 } catch (Exception e) {
                     logger.warn("Exception while loading mappack", e);
                     return;
@@ -186,5 +186,11 @@ public class MapLoader {
 
     public Collection<MapWorld> getWorlds(Map map){
         return this.mapWorlds.get(map);
+    }
+
+    public void tick() {
+        for (Map map : maps) {
+            map.tick();
+        }
     }
 }

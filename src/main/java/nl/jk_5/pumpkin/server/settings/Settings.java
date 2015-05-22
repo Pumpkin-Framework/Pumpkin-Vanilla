@@ -23,6 +23,7 @@ public class Settings {
     public static final ServerSettings server;
     public static final SqlSettings sql;
     public static final int lobbyMappack;
+    public static final LuaVmSettings lua;
 
     static {
         logger = LogManager.getLogger();
@@ -52,6 +53,7 @@ public class Settings {
         sql = new SqlSettings(config.getConfig("sql"));
         server = new ServerSettings(config.getConfig("server"));
         lobbyMappack = config.getInt("lobbyMappack");
+        lua = new LuaVmSettings(config.getConfig("luaVM"));
 
         logger.info("Config is ready");
     }

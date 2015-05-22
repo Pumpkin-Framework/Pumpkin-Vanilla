@@ -16,9 +16,11 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import nl.jk_5.pumpkin.server.Pumpkin;
+import nl.jk_5.pumpkin.server.lua.MachineEventHandler;
 
 import java.io.File;
 import java.io.IOException;
@@ -170,5 +172,11 @@ public abstract class MixinDedicatedServer extends MinecraftServer {
     @Overwrite
     public boolean getAllowNether(){
         return true;
+    }
+
+    @Inject(method = "updateTimeLightAndEntities", at = @At("RETURN"))
+    public void onTick(CallbackInfo ci) {
+        //TODO: little nicer tick hook system
+        MachineEventHandler.tick();
     }
 }
